@@ -1,0 +1,96 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Lechpol Logistics Park">
+    <!-- Pasek Nawigacji -->
+    <nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="font-bold text-xl tracking-wider">
+                    LECHPOL <span class="text-sky-500">LOGISTICS</span>
+                </div>
+                <div class="hidden md:flex space-x-8 font-medium">
+                    <a href="#o-parku" class="hover:text-sky-500 transition">O Parku</a>
+                    <a href="#strefy" class="hover:text-sky-500 transition">Strefy Najemców</a>
+                    <a href="/kontakt" class="hover:text-sky-500 transition">Kontakt</a>
+                </div>
+                <span class="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wide">
+                    Wersja DEV
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sekcja Powitalna (Hero) -->
+    <header class="bg-slate-900 text-white py-24 border-b-4 border-sky-500 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 text-center relative z-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+                Nowoczesne Centrum <br> <span class="text-sky-500">Magazynowo-Dystrybucyjne</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
+                Dostarczamy najwyższej klasy powierzchnie logistyczne dostosowane do specyficznych wymagań liderów rynku.
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-16">
+        <!-- Sekcja O Parku -->
+        <section id="o-parku" class="mb-24 pt-8">
+            <div class="bg-white rounded-2xl shadow-sm p-8 md:p-12 border border-gray-100 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6">Innowacyjna przestrzeń dla biznesu</h2>
+                <p class="text-gray-600 text-lg max-w-4xl mx-auto leading-relaxed">
+                    Lechpol Logistics Park to strategiczny punkt na mapie logistycznej, oferujący bezpośredni dostęp do kluczowych węzłów komunikacyjnych. Zapewniamy kompleksową infrastrukturę, rygorystyczne standardy bezpieczeństwa oraz elastyczność dopasowania modułów do procesów operacyjnych naszych partnerów.
+                </p>
+            </div>
+        </section>
+
+        <!-- Sekcja Strefy Najemców -->
+        <section id="strefy" class="mb-12 pt-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-12 text-center">Dedykowane Rozwiązania</h2>
+            
+            <div class="grid md:grid-cols-2 gap-10">
+                <!-- Karta Eurocash -->
+                <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border-t-4 border-sky-500">
+                    <div class="p-8 h-full flex flex-col">
+                        <div class="uppercase tracking-wider text-sm text-sky-500 font-bold mb-2">FMCG & Dystrybucja</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4">Strefa Eurocash</h3>
+                        <p class="text-gray-600 mb-8 flex-grow">
+                            Wysokowydajny węzeł przeładunkowy zaprojektowany pod kątem szybkiej rotacji towarów i optymalizacji łańcucha dostaw.
+                        </p>
+                        <ul class="space-y-3 text-gray-700 font-medium border-t pt-6 border-gray-100">
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Zoptymalizowane bramy cross-docking</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Strefy z kontrolowaną temperaturą</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Zaawansowane zarządzanie ruchem (YMS)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Karta Tatra Spring -->
+                <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border-t-4 border-slate-800">
+                    <div class="p-8 h-full flex flex-col">
+                        <div class="uppercase tracking-wider text-sm text-gray-500 font-bold mb-2">Składowanie & Obsługa</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4">Strefa Tatra Spring</h3>
+                        <p class="text-gray-600 mb-8 flex-grow">
+                            Specjalistyczny magazyn przystosowany do bezpiecznego przechowywania produktów gotowych oraz wielkogabarytowych.
+                        </p>
+                        <ul class="space-y-3 text-gray-700 font-medium border-t pt-6 border-gray-100">
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Składowanie wysokiego regału (do 12m)</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Wzmocniona nośność posadzki</li>
+                            <li class="flex items-center"><span class="text-green-500 mr-3">✔</span> Całodobowy monitoring i ochrona</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Stopka -->
+    <footer class="bg-slate-900 text-gray-400 py-8 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2026 Lechpol Logistics Park. Wszystkie prawa zastrzeżone.</p>
+        </div>
+    </footer>
+</Layout>
