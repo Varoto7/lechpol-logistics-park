@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-// Sprawdzamy w URL, czy formularz wrócił z sukcesem
 const status = Astro.url.searchParams.get('status');
 
 let successMessage = "";
@@ -10,9 +9,9 @@ let errorMessage = "";
 if (status === 'success') {
     successMessage = "Wiadomość została zapisana w bazie danych D1!";
 } else if (status === 'error') {
-    errorMessage = "Wystąpił błąd SQL podczas zapisu do bazy.";
+    errorMessage = "Wystąpił błąd podczas zapisu do bazy.";
 } else if (status === 'nodb') {
-    errorMessage = "Błąd: Baza danych D1 nie jest podłączona.";
+    errorMessage = "Błąd: Baza danych D1 nie jest podłączona w Cloudflare.";
 }
 ---
 
@@ -57,9 +56,8 @@ if (status === 'success') {
 
             <div class="bg-slate-900 p-8 md:p-10 rounded-2xl shadow-xl text-white">
                 <h2 class="text-2xl font-bold mb-6">Napisz wiadomość</h2>
-                <!-- WAŻNE: Dodany action wskazujący na nasz nowy API endpoint -->
-                    <form action="/kontakt" method="POST" class="space-y-5"></form>
-                <div>
+                <form action="/kontakt" method="POST" class="space-y-5">
+                    <div>
                         <label class="block text-sm font-medium text-gray-400 mb-2">Twój e-mail</label>
                         <input type="email" name="email" required placeholder="jan.kowalski@firma.pl" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500">
                     </div>
