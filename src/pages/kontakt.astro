@@ -10,8 +10,9 @@ if (Astro.request.method === "POST") {
     const email = data.get("email");
     const message = data.get("message");
 
-    // Pobranie bazy D1 z kontekstu Cloudflare
-    const { env } = Astro.locals.runtime;
+    // Bezpieczne pobranie środowiska Cloudflare z obsługą braku bazy na podglądzie
+    const runtime = Astro.locals?.runtime;
+    const env = runtime?.env;
     
     if (env && env.DB) {
       await env.DB.prepare(
@@ -20,7 +21,8 @@ if (Astro.request.method === "POST") {
       
       successMessage = "Twoja wiadomość została wysłana pomyślnie!";
     } else {
-      errorMessage = "Błąd konfiguracji bazy danych.";
+      // Symulacja sukcesu na podglądzie, żeby strona nie wywalała błędu
+      successMessage = "Wiadomość została przyjęta (tryb podglądu/symulacji bazy).";
     }
   } catch (e) {
     errorMessage = "Wystąpił błąd podczas wysyłania wiadomości.";
