@@ -1,7 +1,9 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
+import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
-  // Usuwamy output 'server' i adapter cloudflare, przechodzimy na statyczny HTML
+  output: 'server',
+  adapter: cloudflare(),
   integrations: [tailwind()]
 });

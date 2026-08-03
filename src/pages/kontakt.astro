@@ -1,31 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
+export const prerender = false; // Gwarancja, że Cloudflare użyje tu serwera
+
+// Sprawdzamy w URL, czy formularz wrócił z sukcesem
+const status = Astro.url.searchParams.get('status');
 
 let successMessage = "";
 let errorMessage = "";
 
-if (Astro.request.method === "POST") {
-  try {
-    const data = await Astro.request.formData();
-    const email = data.get("email");
-    const message = data.get("message");
-
-    // Pobieramy środowisko Cloudflare
-    const env = Astro.locals?.runtime?.env;
-    
-    if (env && env.DB) {
-      // Zapis do bazy D1
-      await env.DB.prepare(
-        "INSERT INTO messages (email, message, created_at) VALUES (?, ?, datetime('now'))"
-      ).bind(email, message).run();
-      
-      successMessage = "Wiadomość została zapisana w bazie danych D1!";
-    } else {
-      errorMessage = "Błąd: Baza danych D1 nie jest podłączona do tego środowiska (sprawdź zakładkę Bindings w Cloudflare).";
-    }
-  } catch (e) {
-    errorMessage = "Błąd SQL: " + e.message;
-  }
+if (status === 'success') {
+    successMessage = "Wiadomość została zapisana w bazie danych D1!";
+} else if (status === 'error') {
+    errorMessage = "Wystąpił błąd SQL podczas zapisu do bazy.";
+} else if (status === 'nodb') {
+    errorMessage = "Błąd: Baza danych D1 nie jest podłączona.";
 }
 ---
 
@@ -70,7 +58,8 @@ if (Astro.request.method === "POST") {
 
             <div class="bg-slate-900 p-8 md:p-10 rounded-2xl shadow-xl text-white">
                 <h2 class="text-2xl font-bold mb-6">Napisz wiadomość</h2>
-                <form method="POST" class="space-y-5">
+                <!-- WAŻNE: Dodany action wskazujący na nasz nowy API endpoint -->
+                <form action="/api/kontakt" method="POST" class="space-y-5">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-2">Twój e-mail</label>
                         <input type="email" name="email" required placeholder="jan.kowalski@firma.pl" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500">
