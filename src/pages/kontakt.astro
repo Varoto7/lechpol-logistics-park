@@ -1,5 +1,31 @@
 ---
 import Layout from '../layouts/Layout.astro';
+
+let successMessage = "";
+let errorMessage = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const email = data.get("email");
+    const message = data.get("message");
+
+    // Pobranie bazy D1 z kontekstu Cloudflare
+    const { env } = Astro.locals.runtime;
+    
+    if (env && env.DB) {
+      await env.DB.prepare(
+        "INSERT INTO messages (email, message, created_at) VALUES (?, ?, datetime('now'))"
+      ).bind(email, message).run();
+      
+      successMessage = "Twoja wiadomość została wysłana pomyślnie!";
+    } else {
+      errorMessage = "Błąd konfiguracji bazy danych.";
+    }
+  } catch (e) {
+    errorMessage = "Wystąpił błąd podczas wysyłania wiadomości.";
+  }
+}
 ---
 
 <Layout title="Kontakt | Lechpol Logistics Park">
@@ -21,6 +47,18 @@ import Layout from '../layouts/Layout.astro';
 
     <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
         <h1 class="text-4xl font-bold text-slate-900 mb-12 text-center">Skontaktuj się z nami</h1>
+        
+        {successMessage && (
+            <div class="max-w-2xl mx-auto mb-8 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center font-medium">
+                {successMessage}
+            </div>
+        )}
+
+        {errorMessage && (
+            <div class="max-w-2xl mx-auto mb-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center font-medium">
+                {errorMessage}
+            </div>
+        )}
         
         <div class="grid md:grid-cols-2 gap-12 items-start">
             
