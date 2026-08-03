@@ -10,20 +10,21 @@ if (Astro.request.method === "POST") {
     const email = data.get("email");
     const message = data.get("message");
 
-    const runtime = Astro.locals?.runtime;
-    const env = runtime?.env;
+    // Pobieramy środowisko Cloudflare
+    const env = Astro.locals?.runtime?.env;
     
     if (env && env.DB) {
+      // Zapis do bazy D1
       await env.DB.prepare(
         "INSERT INTO messages (email, message, created_at) VALUES (?, ?, datetime('now'))"
       ).bind(email, message).run();
       
-      successMessage = "Twoja wiadomość została zapisana w bazie!";
+      successMessage = "Wiadomość została zapisana w bazie danych D1!";
     } else {
-      errorMessage = "Baza D1 nie jest podłączona w tym środowisku (np. na Preview).";
+      errorMessage = "Błąd: Baza danych D1 nie jest podłączona do tego środowiska (sprawdź zakładkę Bindings w Cloudflare).";
     }
   } catch (e) {
-    errorMessage = "Wystąpił błąd podczas zapisu do bazy.";
+    errorMessage = "Błąd SQL: " + e.message;
   }
 }
 ---
@@ -63,7 +64,7 @@ if (Astro.request.method === "POST") {
             <div class="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-100">
                 <h2 class="text-2xl font-bold text-slate-800 mb-6">Dane kontaktowe</h2>
                 <p class="text-gray-600 mb-8 leading-relaxed">
-                    Masz pytania dotyczące specyfikacji technicznej lub dostępności powierzchni magazynowych?
+                    Masz pytania dotyczące specyfikacji technicznej lub dostępności powierzchni magazynowych? Nasz kierownik centrum logistycznego chętnie udzieli wszelkich informacji.
                 </p>
             </div>
 
