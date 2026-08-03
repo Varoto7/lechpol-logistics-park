@@ -1,0 +1,7 @@
+name = "lechpol-logistics-park"
+compatibility_date = "2026-08-03"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lechpol-db"
+database_id = "6474f8a1-5247-45e6-b253-3dc9e91d16de"
