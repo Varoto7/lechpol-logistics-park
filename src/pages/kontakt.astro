@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-export const prerender = false; // Gwarancja, że Cloudflare użyje tu serwera
 
 // Sprawdzamy w URL, czy formularz wrócił z sukcesem
 const status = Astro.url.searchParams.get('status');
