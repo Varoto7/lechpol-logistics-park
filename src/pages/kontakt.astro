@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Kontakt | Lechpol Logistics Park">
-    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         <div class="text-center mb-16">
             <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">Skontaktuj się z nami</h1>
             <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Masz pytania o dostępne powierzchnie magazynowe? Napisz do nas lub zadzwoń.</p>
@@ -31,28 +31,28 @@ import Layout from '../layouts/Layout.astro';
             </div>
 
             <!-- Karta formularza -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors duration-300">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors duration-300 relative">
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Napisz do nas</h2>
                 
-                <!-- Pojemnik na komunikat o sukcesie -->
+                <!-- Komunikaty (ukryte domyślnie) -->
                 <div id="successMessage" class="hidden mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                    ✓ Dziękujemy! Twoja wiadomość została wysłana. Skontaktujemy się z Tobą wkrótce.
+                    ✓ Dziękujemy! Twoja wiadomość została wysłana.
+                </div>
+                <div id="errorMessage" class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-sm font-medium">
+                    Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie.
                 </div>
 
                 <form id="contactForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Imię i nazwisko</label>
-                        <input type="text" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="Jan Kowalski" />
-                    </div>
+                    <!-- Usunięto pole "Imię", ponieważ API obsługuje tylko email i message -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Adres e-mail</label>
-                        <input type="email" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="jan@example.com" />
+                        <input type="email" id="email" name="email" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="jan@example.com" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Wiadomość</label>
-                        <textarea rows="4" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="W czym możemy pomóc?"></textarea>
+                        <textarea id="message" name="message" rows="4" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="W czym możemy pomóc?"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition duration-300 mt-2">
+                    <button type="submit" id="submitBtn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition duration-300 mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         Wyślij wiadomość
                     </button>
                 </form>
@@ -65,17 +65,44 @@ import Layout from '../layouts/Layout.astro';
 <script is:inline>
     const form = document.getElementById('contactForm');
     const successMsg = document.getElementById('successMessage');
+    const errorMsg = document.getElementById('errorMessage');
+    const submitBtn = document.getElementById('submitBtn');
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        // Czyszczenie pól
-        form.reset();
-        // Pokazanie ładnego powiadomienia na stronie
-        successMsg.classList.remove('hidden');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); 
         
-        // Ukrycie komunikatu po 5 sekundach
-        setTimeout(() => {
-            successMsg.classList.add('hidden');
-        }, 5000);
+        successMsg.classList.add('hidden');
+        errorMsg.classList.add('hidden');
+        submitBtn.innerText = 'Wysyłanie...';
+        submitBtn.disabled = true;
+
+        // Formowanie danych tak, jak oczekuje tego Twoje API (FormData zamiast JSON)
+        const formData = new FormData();
+        formData.append('email', document.getElementById('email').value);
+        formData.append('message', document.getElementById('message').value);
+
+        try {
+            // Zmieniono metodę przesyłania, by współpracowała z Twoim backendem
+            const response = await fetch('/api/kontakt', { 
+                method: 'POST',
+                body: formData // Brak nagłówka Content-Type (przeglądarka ustawi go automatycznie dla FormData)
+            });
+
+            // Twoje API rzuca przekierowanie 302. Fetch obsługuje je automatycznie.
+            // Sprawdzamy, czy w końcowym adresie po przekierowaniu znajduje się 'status=success'
+            if (response.url.includes('status=success')) {
+                form.reset();
+                successMsg.classList.remove('hidden');
+                setTimeout(() => successMsg.classList.add('hidden'), 5000);
+            } else {
+                errorMsg.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Błąd formularza:', error);
+            errorMsg.classList.remove('hidden');
+        } finally {
+            submitBtn.innerText = 'Wyślij wiadomość';
+            submitBtn.disabled = false;
+        }
     });
 </script>
