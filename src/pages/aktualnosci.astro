@@ -3,43 +3,49 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Aktualności | Lechpol Logistics Park">
-    <main class="max-w-4xl mx-auto px-4 py-16 w-full flex-grow">
-        <h1 class="text-4xl font-bold text-slate-900 mb-12 text-center">Aktualności</h1>
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">Aktualności</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Najnowsze informacje, komunikaty i wydarzenia z naszego parku logistycznego.</p>
+        </div>
         
-        <div id="news-container" class="space-y-8">
-            <!-- Tutaj skrypt wstawi wiadomości z bazy -->
-            <p class="text-center text-gray-500">Ładowanie aktualności...</p>
+        <div id="news-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Tutaj skrypt wstrzyknie aktualności z bazy D1 -->
+            <p class="text-gray-500 dark:text-gray-400 col-span-full text-center">Ładowanie aktualności...</p>
         </div>
     </main>
-
-    <script>
-        async function fetchNews() {
-            const container = document.getElementById('news-container');
-            try {
-                const response = await fetch('/api/get-news');
-                const news = await response.json();
-
-                if (news.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500">Brak aktualności do wyświetlenia.</p>';
-                    return;
-                }
-
-                // Generowanie kafelków z newsami
-                container.innerHTML = news.map(item => `
-                    <article class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                        <span class="text-sky-600 text-sm font-bold tracking-wider uppercase mb-2 block">
-                            ${new Date(item.created_at).toLocaleDateString('pl-PL')}
-                        </span>
-                        <h2 class="text-2xl font-bold text-slate-800 mb-4">${item.title}</h2>
-                        <div class="text-gray-600 leading-relaxed whitespace-pre-wrap">${item.content}</div>
-                    </article>
-                `).join('');
-            } catch (error) {
-                container.innerHTML = '<p class="text-center text-red-500">Wystąpił błąd podczas pobierania aktualności.</p>';
-            }
-        }
-        
-        // Uruchom pobieranie po załadowaniu strony
-        fetchNews();
-    </script>
 </Layout>
+
+<script is:inline>
+    async function fetchNews() {
+        try {
+            const res = await fetch('/api/get-news');
+            if(!res.ok) throw new Error('Błąd pobierania');
+            const news = await res.json();
+            
+            const container = document.getElementById('news-container');
+            container.innerHTML = '';
+            
+            if(news.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 col-span-full text-center">Brak aktualności do wyświetlenia.</p>';
+                return;
+            }
+
+            news.forEach(item => {
+                const date = new Date(item.created_at).toLocaleDateString('pl-PL');
+                // Poniżej zaktualizowana struktura kafelka newsa (wspiera dark mode!)
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors duration-300 flex flex-col hover:shadow-lg">
+                        <span class="text-sm font-bold text-sky-500 dark:text-sky-400 mb-3 block">${date}</span>
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-4">${item.title}</h2>
+                        <p class="text-gray-600 dark:text-gray-300 flex-grow whitespace-pre-line leading-relaxed">${item.content}</p>
+                    </div>
+                `;
+            });
+        } catch (e) {
+            document.getElementById('news-container').innerHTML = '<p class="text-red-500 dark:text-red-400 col-span-full text-center">Nie udało się załadować aktualności. Spróbuj odświeżyć stronę.</p>';
+        }
+    }
+    
+    fetchNews();
+</script>
