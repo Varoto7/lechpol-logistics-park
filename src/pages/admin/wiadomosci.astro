@@ -1,0 +1,152 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Panel Admina | Wiadomości">
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+        
+        <!-- Nagłówek z przyciskami -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Skrzynka Odbiorcza</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Lista zapytań przesłanych przez formularz kontaktowy</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Przycisk eksportu CSV -->
+                <button 
+                    id="exportBtn" 
+                    onclick="exportToCSV()" 
+                    disabled
+                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl transition duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Pobierz do CSV
+                </button>
+
+                <a href="/admin/dodaj-news" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 font-medium text-sm rounded-xl transition duration-200">
+                    ← Wróć do newsów
+                </a>
+            </div>
+        </div>
+
+        <!-- Tabela z wiadomościami -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                            <th class="p-4 w-48">Data</th>
+                            <th class="p-4 w-64">E-mail nadawcy</th>
+                            <th class="p-4">Treść wiadomości</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesTableBody" class="divide-y divide-gray-100 dark:divide-slate-700">
+                        <tr>
+                            <td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                Ładowanie wiadomości...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</Layout>
+
+<script is:inline>
+    // Globalna zmienna do przechowywania wiadomości do eksportu
+    let fetchedMessages = [];
+
+    async function fetchMessages() {
+        const tbody = document.getElementById('messagesTableBody');
+        const exportBtn = document.getElementById('exportBtn');
+
+        try {
+            const response = await fetch('/admin/get-messages');
+            const data = await response.json();
+            
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500 dark:text-red-400">Błąd serwera: ${data.error}</td></tr>`;
+                return;
+            }
+
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Skrzynka jest pusta.</td></tr>`;
+                return;
+            }
+
+            // Zapisujemy pobrane dane globalnie i aktywujemy przycisk eksportu
+            fetchedMessages = data;
+            if (exportBtn) exportBtn.disabled = false;
+
+            tbody.innerHTML = data.map(msg => {
+                const dateObj = new Date(msg.created_at);
+                const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="p-4 text-sm text-gray-500 dark:text-gray-400 align-top whitespace-nowrap">
+                            ${formattedDate}
+                        </td>
+                        <td class="p-4 text-sm font-medium text-slate-900 dark:text-white align-top break-all">
+                            <a href="mailto:${msg.email}" class="hover:text-sky-500 transition-colors">${msg.email}</a>
+                        </td>
+                        <td class="p-4 text-sm text-slate-700 dark:text-gray-300 align-top whitespace-pre-wrap">
+                            ${msg.message}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500 dark:text-red-400">Nie udało się załadować bazy danych. Sprawdź połączenie.</td></tr>`;
+        }
+    }
+
+    // Funkcja pobierania CSV
+    window.exportToCSV = function() {
+        if (!fetchedMessages || fetchedMessages.length === 0) return;
+
+        // Nagłówki kolumn w pliku CSV
+        const headers = ["ID", "Data", "Email", "Tresc Wiadomosci"];
+        
+        // Mapowanie wiadomości na wiersze CSV
+        const rows = fetchedMessages.map(msg => {
+            const dateObj = new Date(msg.created_at);
+            const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
+            
+            // Zastępujemy znaki nowej linii i cudzysłowy, aby nie rozbić struktury tabeli w Excelu
+            const cleanMessage = (msg.message || '').replace(/"/g, '""').replace(/\n/g, ' ');
+            
+            return [
+                msg.id || '',
+                `"${formattedDate}"`,
+                `"${msg.email || ''}"`,
+                `"${cleanMessage}"`
+            ];
+        });
+
+        // Łączymy nagłówki i wiersze przecinkami / średnikami (standard dla polskich wersji Excela)
+        const csvContent = [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
+
+        // Tworzymy plik z widocznym znakiem BOM (\uFEFF), dzięki czemu Excel odczyta polskie znaki (UTF-8)
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        // Generowanie nazwy pliku z dzisiejszą datą, np. wiadomosci_lechpol_2026-08-04.csv
+        const today = new Date().toISOString().split('T')[0];
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `wiadomosci_lechpol_${today}.csv`);
+        document.body.appendChild(link);
+        
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    fetchMessages();
+</script>

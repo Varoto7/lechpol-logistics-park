@@ -1,17 +1,71 @@
----
----
-<nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-            <a href="/" class="font-bold text-xl tracking-wider hover:text-sky-500 transition">
-                LECHPOL <span class="text-sky-500">LOGISTICS</span>
+<nav class="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-50 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <a href="/" class="font-bold text-xl text-slate-900 dark:text-white">
+                Lechpol<span class="text-sky-500">Logistics</span>
             </a>
-            <div class="hidden md:flex space-x-8 font-medium">
-                <a href="/#o-parku" class="hover:text-sky-500 transition">O Parku</a>
-                <a href="/hale" class="hover:text-sky-500 transition">Hale Magazynowe</a>
-                <a href="/aktualnosci" class="hover:text-sky-500 transition">Aktualności</a>
-                <a href="/kontakt" class="text-sky-500 transition">Kontakt</a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex space-x-8 items-center font-medium">
+                <a href="/hale" class="text-slate-600 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 transition">Hale Magazynowe</a>
+                <a href="/aktualnosci" class="text-slate-600 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 transition">Aktualności</a>
+                <a href="/kontakt" class="text-slate-600 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 transition">Kontakt</a>
+                
+                <!-- Przełącznik Motywu (PC) -->
+                <button class="themeToggle p-2 bg-gray-100 dark:bg-slate-700 rounded-full hover:bg-gray-200 dark:hover:bg-slate-600 transition">
+                    <svg class="w-5 h-5 text-slate-800 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Menu & Theme Button -->
+            <div class="md:hidden flex items-center space-x-4">
+                 <!-- Przełącznik Motywu (Mobilny) -->
+                <button class="themeToggle p-2 bg-gray-100 dark:bg-slate-700 rounded-full">
+                    <svg class="w-5 h-5 text-slate-800 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+
+                <!-- Przycisk Hamburger -->
+                <button id="mobileMenuBtn" class="text-slate-600 dark:text-gray-300 hover:text-sky-500 focus:outline-none p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Rozwijane menu mobilne (domyślnie ukryte) -->
+    <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+        <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+            <a href="/hale" class="block px-3 py-2 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-md">Hale Magazynowe</a>
+            <a href="/aktualnosci" class="block px-3 py-2 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-md">Aktualności</a>
+            <a href="/kontakt" class="block px-3 py-2 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-md">Kontakt</a>
+        </div>
+    </div>
 </nav>
+
+<script is:inline>
+    // 1. Rozwijanie mobilnego menu po kliknięciu w hamburger
+    const btn = document.getElementById('mobileMenuBtn');
+    const menu = document.getElementById('mobileMenu');
+    btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+    });
+
+    // 2. Obsługa Dark Mode (wyszukuje oba przyciski: PC i Mobilny)
+    const handleToggleClick = () => {
+        const element = document.documentElement;
+        element.classList.toggle("dark");
+        const isDark = element.classList.contains("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    document.querySelectorAll('.themeToggle').forEach(button => {
+        button.addEventListener('click', handleToggleClick);
+    });
+</script>
