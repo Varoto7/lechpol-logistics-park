@@ -1,0 +1,75 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const status = Astro.url.searchParams.get('status');
+
+let successMessage = "";
+let errorMessage = "";
+
+if (status === 'success') {
+    successMessage = "Wiadomość została zapisana w bazie danych D1!";
+} else if (status === 'error') {
+    errorMessage = "Wystąpił błąd podczas zapisu do bazy.";
+} else if (status === 'nodb') {
+    errorMessage = "Błąd: Baza danych D1 nie jest podłączona w Cloudflare.";
+}
+---
+
+<Layout title="Kontakt | Lechpol Logistics Park">
+    <nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="/" class="font-bold text-xl tracking-wider hover:text-sky-500 transition">
+                    LECHPOL <span class="text-sky-500">LOGISTICS</span>
+                </a>
+                <div class="hidden md:flex space-x-8 font-medium">
+                    <a href="/#o-parku" class="hover:text-sky-500 transition">O Parku</a>
+                    <a href="/#strefy" class="hover:text-sky-500 transition">Strefy Najemców</a>
+                    <a href="/kontakt" class="text-sky-500 transition">Kontakt</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
+        <h1 class="text-4xl font-bold text-slate-900 mb-12 text-center">Skontaktuj się z nami</h1>
+        
+        {successMessage && (
+            <div class="max-w-2xl mx-auto mb-8 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center font-medium">
+                {successMessage}
+            </div>
+        )}
+
+        {errorMessage && (
+            <div class="max-w-2xl mx-auto mb-8 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center font-medium">
+                {errorMessage}
+            </div>
+        )}
+        
+        <div class="grid md:grid-cols-2 gap-12 items-start">
+            <div class="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">Dane kontaktowe</h2>
+                <p class="text-gray-600 mb-8 leading-relaxed">
+                    Masz pytania dotyczące specyfikacji technicznej lub dostępności powierzchni magazynowych? Nasz kierownik centrum logistycznego chętnie udzieli wszelkich informacji.
+                </p>
+            </div>
+
+            <div class="bg-slate-900 p-8 md:p-10 rounded-2xl shadow-xl text-white">
+                <h2 class="text-2xl font-bold mb-6">Napisz wiadomość</h2>
+                <form action="/kontakt" method="POST" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Twój e-mail</label>
+                        <input type="email" name="email" required placeholder="jan.kowalski@firma.pl" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Wiadomość</label>
+                        <textarea name="message" rows="5" required placeholder="Opisz swoje zapotrzebowanie..." class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+                        Wyślij zapytanie
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+</Layout>
