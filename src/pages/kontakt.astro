@@ -43,7 +43,6 @@ import Layout from '../layouts/Layout.astro';
                 </div>
 
                 <form id="contactForm" class="space-y-4">
-                    <!-- Usunięto pole "Imię", ponieważ API obsługuje tylko email i message -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Adres e-mail</label>
                         <input type="email" id="email" name="email" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="jan@example.com" />
@@ -76,29 +75,37 @@ import Layout from '../layouts/Layout.astro';
         submitBtn.innerText = 'Wysyłanie...';
         submitBtn.disabled = true;
 
-        // Formowanie danych tak, jak oczekuje tego Twoje API (FormData zamiast JSON)
         const formData = new FormData();
         formData.append('email', document.getElementById('email').value);
         formData.append('message', document.getElementById('message').value);
 
         try {
-            // Zmieniono metodę przesyłania, by współpracowała z Twoim backendem
             const response = await fetch('/api/kontakt', { 
                 method: 'POST',
-                body: formData // Brak nagłówka Content-Type (przeglądarka ustawi go automatycznie dla FormData)
+                body: formData 
             });
 
-            // Twoje API rzuca przekierowanie 302. Fetch obsługuje je automatycznie.
-            // Sprawdzamy, czy w końcowym adresie po przekierowaniu znajduje się 'status=success'
+            // SPRAWDZAMY CO ZWRÓCIŁ TWÓJ BACKEND:
             if (response.url.includes('status=success')) {
                 form.reset();
                 successMsg.classList.remove('hidden');
                 setTimeout(() => successMsg.classList.add('hidden'), 5000);
-            } else {
+            } 
+            else if (response.url.includes('status=nodb')) {
+                errorMsg.innerText = "Błąd: Baza D1 nie jest przypięta do tego środowiska (zwrócono status=nodb). Sprawdź ustawienia Cloudflare Pages dla środowiska Preview!";
+                errorMsg.classList.remove('hidden');
+            }
+            else if (response.url.includes('status=error')) {
+                errorMsg.innerText = "Błąd bazy danych: Nie udało się zapisać (zwrócono status=error).";
+                errorMsg.classList.remove('hidden');
+            }
+            else {
+                errorMsg.innerText = `Niezidentyfikowany błąd: ${response.status}. Spróbuj ponownie.`;
                 errorMsg.classList.remove('hidden');
             }
         } catch (error) {
             console.error('Błąd formularza:', error);
+            errorMsg.innerText = "Krytyczny błąd połączenia z serwerem.";
             errorMsg.classList.remove('hidden');
         } finally {
             submitBtn.innerText = 'Wyślij wiadomość';
