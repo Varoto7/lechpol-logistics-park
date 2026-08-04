@@ -4,13 +4,35 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const email = formData.get("email");
     const message = formData.get("message");
+    const turnstileToken = formData.get("cf-turnstile-response");
 
+    // 1. Weryfikacja antyspamowa Turnstile z serwerami Cloudflare
+    const secretKey = "0x4AAAAAAEGGv5EnRpy2SLctZ36_X_3yAx0"; // Twój Secret Key z panelu
+    const clientIp = request.headers.get("CF-Connecting-IP");
+
+    const verifyData = new FormData();
+    verifyData.append("secret", secretKey);
+    verifyData.append("response", turnstileToken);
+    if (clientIp) verifyData.append("remoteip", clientIp);
+
+    const outcome = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: verifyData,
+    });
+
+    const result = await outcome.json();
+
+    // Jeśli weryfikacja bota nie przeszła:
+    if (!result.success) {
+      return Response.redirect(new URL('/kontakt?status=bot', request.url), 302);
+    }
+
+    // 2. Walidacja Bazy D1
     if (!env || !env.DB) {
-      // Baza danych nie jest powiązana w Cloudflare Pages Settings -> Bindings
       return Response.redirect(new URL('/kontakt?status=nodb', request.url), 302);
     }
 
-    // Upewniamy się, że tabela istnieje (tworzy ją automatycznie, jeśli jej brak)
+    // 3. Tworzenie tabeli i zapis danych
     await env.DB.prepare(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,17 +42,14 @@ export async function onRequestPost(context) {
       )
     `).run();
 
-    // Wstawienie danych do bazy
     await env.DB.prepare(
       "INSERT INTO messages (email, message, created_at) VALUES (?, ?, datetime('now'))"
     ).bind(email, message).run();
 
-    // Sukces - przekierowanie z zielonym komunikatem
     return Response.redirect(new URL('/kontakt?status=success', request.url), 302);
 
   } catch (error) {
-    // W razie jakiegokolwiek błędu SQL przekierowujemy na status błędu zamiast rzucać błędem 1101
-    console.error("Błąd bazy D1:", error);
+    console.error("Błąd API:", error);
     return Response.redirect(new URL('/kontakt?status=error', request.url), 302);
   }
 }

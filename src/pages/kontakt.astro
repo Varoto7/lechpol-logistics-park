@@ -3,6 +3,9 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Kontakt | Lechpol Logistics Park">
+    <!-- Skrypt Turnstile od Cloudflare -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
     <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         <div class="text-center mb-16">
             <h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">Skontaktuj się z nami</h1>
@@ -11,7 +14,7 @@ import Layout from '../layouts/Layout.astro';
 
         <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             
-            <!-- Karta danych kontaktowych -->
+            <!-- Dane kontaktowe -->
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors duration-300">
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Dane kontaktowe</h2>
                 <ul class="space-y-6">
@@ -30,11 +33,10 @@ import Layout from '../layouts/Layout.astro';
                 </ul>
             </div>
 
-            <!-- Karta formularza -->
+            <!-- Formularz -->
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors duration-300 relative">
                 <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Napisz do nas</h2>
                 
-                <!-- Komunikaty (ukryte domyślnie) -->
                 <div id="successMessage" class="hidden mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                     ✓ Dziękujemy! Twoja wiadomość została wysłana.
                 </div>
@@ -51,6 +53,10 @@ import Layout from '../layouts/Layout.astro';
                         <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Wiadomość</label>
                         <textarea id="message" name="message" rows="4" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="W czym możemy pomóc?"></textarea>
                     </div>
+
+                    <!-- WIDGET TURNSTILE (Wklej tutaj swój SITE KEY z Cloudflare) -->
+                    <div class="cf-turnstile my-4" data-sitekey="0x4AAAAAAEGGv9lLhbXhEIkI"></div>
+
                     <button type="submit" id="submitBtn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition duration-300 mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         Wyślij wiadomość
                     </button>
@@ -75,9 +81,8 @@ import Layout from '../layouts/Layout.astro';
         submitBtn.innerText = 'Wysyłanie...';
         submitBtn.disabled = true;
 
-        const formData = new FormData();
-        formData.append('email', document.getElementById('email').value);
-        formData.append('message', document.getElementById('message').value);
+        // Pobieramy dane z formularza wraz z tokenem Turnstile
+        const formData = new FormData(form);
 
         try {
             const response = await fetch('/api/kontakt', { 
@@ -85,26 +90,20 @@ import Layout from '../layouts/Layout.astro';
                 body: formData 
             });
 
-            // SPRAWDZAMY CO ZWRÓCIŁ TWÓJ BACKEND:
             if (response.url.includes('status=success')) {
                 form.reset();
+                if (window.turnstile) window.turnstile.reset(); // Reset widgetu
                 successMsg.classList.remove('hidden');
                 setTimeout(() => successMsg.classList.add('hidden'), 5000);
-            } 
-            else if (response.url.includes('status=nodb')) {
-                errorMsg.innerText = "Błąd: Baza D1 nie jest przypięta do tego środowiska (zwrócono status=nodb). Sprawdź ustawienia Cloudflare Pages dla środowiska Preview!";
+            } else if (response.url.includes('status=bot')) {
+                errorMsg.innerText = "Błąd weryfikacji antyspamowej. Spróbuj ponownie.";
                 errorMsg.classList.remove('hidden');
-            }
-            else if (response.url.includes('status=error')) {
-                errorMsg.innerText = "Błąd bazy danych: Nie udało się zapisać (zwrócono status=error).";
-                errorMsg.classList.remove('hidden');
-            }
-            else {
-                errorMsg.innerText = `Niezidentyfikowany błąd: ${response.status}. Spróbuj ponownie.`;
+            } else {
+                errorMsg.innerText = "Błąd wysyłania. Spróbuj ponownie.";
                 errorMsg.classList.remove('hidden');
             }
         } catch (error) {
-            console.error('Błąd formularza:', error);
+            console.error('Błąd:', error);
             errorMsg.innerText = "Krytyczny błąd połączenia z serwerem.";
             errorMsg.classList.remove('hidden');
         } finally {
