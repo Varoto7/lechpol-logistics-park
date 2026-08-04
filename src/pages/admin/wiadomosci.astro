@@ -7,7 +7,7 @@ import Layout from '../../layouts/Layout.astro';
         
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Skrzynka Odbiorcza</h1>
-            <a href="/admin/dodaj-news" class="text-sky-500 hover:text-sky-600 font-medium">← Wróć do newsów</a>
+            <a href="/admin/dodaj-news" class="text-sky-500 hover:text-sky-600 font-medium transition-colors">← Wróć do newsów</a>
         </div>
 
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
@@ -37,12 +37,13 @@ import Layout from '../../layouts/Layout.astro';
 <script is:inline>
     async function fetchMessages() {
         try {
-            const response = await fetch('/api/get-messages');
+            // Odpytujemy zaktualizowaną ścieżkę: /admin/get-messages
+            const response = await fetch('/admin/get-messages');
             const data = await response.json();
             const tbody = document.getElementById('messagesTableBody');
             
             if (data.error) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500">Błąd serwera: ${data.error}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500 dark:text-red-400">Błąd serwera: ${data.error}</td></tr>`;
                 return;
             }
 
@@ -52,7 +53,7 @@ import Layout from '../../layouts/Layout.astro';
             }
 
             tbody.innerHTML = data.map(msg => {
-                // Formatyzacja daty
+                // Formatyzacja daty z bazy danych
                 const dateObj = new Date(msg.created_at);
                 const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
 
@@ -72,7 +73,7 @@ import Layout from '../../layouts/Layout.astro';
             }).join('');
 
         } catch (error) {
-            document.getElementById('messagesTableBody').innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500">Nie udało się załadować bazy danych.</td></tr>`;
+            document.getElementById('messagesTableBody').innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500 dark:text-red-400">Nie udało się załadować bazy danych. Sprawdź połączenie lub ustawienia środowiska.</td></tr>`;
         }
     }
 
