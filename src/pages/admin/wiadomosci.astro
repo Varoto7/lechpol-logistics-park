@@ -1,0 +1,80 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Panel Admina | Wiadomości">
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+        
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Skrzynka Odbiorcza</h1>
+            <a href="/admin/dodaj-news" class="text-sky-500 hover:text-sky-600 font-medium">← Wróć do newsów</a>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                            <th class="p-4 w-48">Data</th>
+                            <th class="p-4 w-64">E-mail nadawcy</th>
+                            <th class="p-4">Treść wiadomości</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesTableBody" class="divide-y divide-gray-100 dark:divide-slate-700">
+                        <tr>
+                            <td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                Ładowanie wiadomości...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</Layout>
+
+<script is:inline>
+    async function fetchMessages() {
+        try {
+            const response = await fetch('/api/get-messages');
+            const data = await response.json();
+            const tbody = document.getElementById('messagesTableBody');
+            
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500">Błąd serwera: ${data.error}</td></tr>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Skrzynka jest pusta.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(msg => {
+                // Formatyzacja daty
+                const dateObj = new Date(msg.created_at);
+                const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="p-4 text-sm text-gray-500 dark:text-gray-400 align-top whitespace-nowrap">
+                            ${formattedDate}
+                        </td>
+                        <td class="p-4 text-sm font-medium text-slate-900 dark:text-white align-top break-all">
+                            <a href="mailto:${msg.email}" class="hover:text-sky-500 transition-colors">${msg.email}</a>
+                        </td>
+                        <td class="p-4 text-sm text-slate-700 dark:text-gray-300 align-top whitespace-pre-wrap">
+                            ${msg.message}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (error) {
+            document.getElementById('messagesTableBody').innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-500">Nie udało się załadować bazy danych.</td></tr>`;
+        }
+    }
+
+    fetchMessages();
+</script>
