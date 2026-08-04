@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Aktualności | Lechpol Logistics Park">
+    <main class="max-w-4xl mx-auto px-4 py-16 w-full flex-grow">
+        <h1 class="text-4xl font-bold text-slate-900 mb-12 text-center">Aktualności</h1>
+        
+        <div id="news-container" class="space-y-8">
+            <!-- Tutaj skrypt wstawi wiadomości z bazy -->
+            <p class="text-center text-gray-500">Ładowanie aktualności...</p>
+        </div>
+    </main>
+
+    <script>
+        async function fetchNews() {
+            const container = document.getElementById('news-container');
+            try {
+                const response = await fetch('/api/get-news');
+                const news = await response.json();
+
+                if (news.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500">Brak aktualności do wyświetlenia.</p>';
+                    return;
+                }
+
+                // Generowanie kafelków z newsami
+                container.innerHTML = news.map(item => `
+                    <article class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <span class="text-sky-600 text-sm font-bold tracking-wider uppercase mb-2 block">
+                            ${new Date(item.created_at).toLocaleDateString('pl-PL')}
+                        </span>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">${item.title}</h2>
+                        <div class="text-gray-600 leading-relaxed whitespace-pre-wrap">${item.content}</div>
+                    </article>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = '<p class="text-center text-red-500">Wystąpił błąd podczas pobierania aktualności.</p>';
+            }
+        }
+        
+        // Uruchom pobieranie po załadowaniu strony
+        fetchNews();
+    </script>
+</Layout>

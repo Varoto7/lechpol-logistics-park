@@ -16,22 +16,7 @@ if (status === 'success') {
 ---
 
 <Layout title="Kontakt | Lechpol Logistics Park">
-    <nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <a href="/" class="font-bold text-xl tracking-wider hover:text-sky-500 transition">
-                    LECHPOL <span class="text-sky-500">LOGISTICS</span>
-                </a>
-                <div class="hidden md:flex space-x-8 font-medium">
-                    <a href="/#o-parku" class="hover:text-sky-500 transition">O Parku</a>
-                    <a href="/#strefy" class="hover:text-sky-500 transition">Strefy Najemców</a>
-                    <a href="/kontakt" class="text-sky-500 transition">Kontakt</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
+    <main class="max-w-7xl mx-auto px-4 py-16 w-full flex-grow">
         <h1 class="text-4xl font-bold text-slate-900 mb-12 text-center">Skontaktuj się z nami</h1>
         
         {successMessage && (
@@ -47,13 +32,31 @@ if (status === 'success') {
         )}
         
         <div class="grid md:grid-cols-2 gap-12 items-start">
+            <!-- LEWA STRONA: Informacje i Kierownik -->
             <div class="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="text-2xl font-bold text-slate-800 mb-6">Dane kontaktowe</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Dane kontaktowe</h2>
                 <p class="text-gray-600 mb-8 leading-relaxed">
-                    Masz pytania dotyczące specyfikacji technicznej lub dostępności powierzchni magazynowych? Nasz kierownik centrum logistycznego chętnie udzieli wszelkich informacji.
+                    Masz pytania dotyczące specyfikacji technicznej lub dostępności powierzchni magazynowych? Nasz zespół chętnie udzieli wszelkich informacji.
                 </p>
+
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900">Kierownik Centrum Logistycznego</h3>
+                    <p class="text-slate-600 font-medium mb-4">Jan Kowalski</p>
+                    
+                    <div class="space-y-4">
+                        <a href="tel:+48123456789" class="flex items-center text-slate-700 hover:text-sky-600 transition">
+                            <svg class="w-5 h-5 mr-3 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            +48 123 456 789
+                        </a>
+                        <a href="mailto:kierownik@lechpol-logistics.pl" class="flex items-center text-slate-700 hover:text-sky-600 transition">
+                            <svg class="w-5 h-5 mr-3 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            kierownik@lechpol-logistics.pl
+                        </a>
+                    </div>
+                </div>
             </div>
 
+            <!-- PRAWA STRONA: Formularz -->
             <div class="bg-slate-900 p-8 md:p-10 rounded-2xl shadow-xl text-white">
                 <h2 class="text-2xl font-bold mb-6">Napisz wiadomość</h2>
                 <form action="/kontakt" method="POST" class="space-y-5">
