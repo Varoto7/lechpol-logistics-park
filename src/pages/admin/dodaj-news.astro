@@ -8,22 +8,31 @@ import Layout from '../../layouts/Layout.astro';
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Zarządzanie Aktualnościami</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Dodawaj nowe wpisy i zarządzaj istniejącymi</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Dodawaj, edytuj i usuwaj wpisy (Pełny CRUD)</p>
             </div>
             <a href="/admin/wiadomosci" class="text-sky-500 hover:text-sky-600 font-medium transition-colors">Przejdź do wiadomości →</a>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
             
-            <!-- Lewa Kolumna: Formularz dodawania -->
+            <!-- Lewa Kolumna: Formularz dodawania / edycji -->
             <div class="lg:col-span-1 h-fit bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 transition-colors duration-300">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Dodaj nowy wpis</h2>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="formTitle" class="text-xl font-bold text-slate-900 dark:text-white">Dodaj nowy wpis</h2>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="hidden text-sm text-gray-500 hover:text-red-500 transition-colors font-medium">
+                        ✕ Anuluj edycję
+                    </button>
+                </div>
                 
                 <div id="formSuccess" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                    ✓ Wpis został opublikowany!
+                    ✓ Akcja zakończona sukcesem!
                 </div>
 
                 <form id="addNewsForm" class="space-y-4">
+                    <!-- Ukryte pole ID dla trybu edycji -->
+                    <input type="hidden" id="editId" name="id" value="" />
+
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Tytuł</label>
                         <input type="text" id="title" name="title" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none transition-colors" placeholder="Np. Nowa hala w Miętnem" />
@@ -70,13 +79,24 @@ import Layout from '../../layouts/Layout.astro';
     const tableBody = document.getElementById('newsTableBody');
     const formSuccess = document.getElementById('formSuccess');
     const submitBtn = document.getElementById('submitNewsBtn');
+    
+    // Zmienne do zarządzania stanem edycji
+    const formTitle = document.getElementById('formTitle');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const editIdInput = document.getElementById('editId');
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
 
-    // 1. POBIERANIE I WYSWIETLANIE NEWSÓW (READ)
+    // Globalna tablica, by mieć dostęp do pełnych treści przy kliknięciu "Edytuj"
+    let allNews = [];
+
+    // 1. POBIERANIE (READ)
     async function fetchNews() {
         try {
-            // Używamy Twojego publicznego endpointu pobierającego newsy
             const response = await fetch('/api/get-news');
             const data = await response.json();
+            
+            allNews = data; // Zapisujemy do zmiennej globalnej
 
             if (!Array.isArray(data) || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak opublikowanych aktualności.</td></tr>`;
@@ -86,7 +106,6 @@ import Layout from '../../layouts/Layout.astro';
             tableBody.innerHTML = data.map(news => {
                 const dateObj = new Date(news.created_at);
                 const formattedDate = dateObj.toLocaleDateString('pl-PL');
-                // Skracamy treść do max 60 znaków
                 const shortContent = news.content.length > 60 ? news.content.substring(0, 60) + '...' : news.content;
 
                 return `
@@ -98,7 +117,13 @@ import Layout from '../../layouts/Layout.astro';
                         <td class="p-4 text-sm text-slate-700 dark:text-gray-300 align-top">
                             ${shortContent}
                         </td>
-                        <td class="p-4 text-right align-top">
+                        <td class="p-4 text-right align-top whitespace-nowrap">
+                            <!-- Przycisk Edytuj -->
+                            <button onclick="startEdit(${news.id})" class="inline-flex items-center px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 dark:text-amber-400 rounded-lg text-xs font-semibold transition-colors mr-2">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Edytuj
+                            </button>
+                            <!-- Przycisk Usuń -->
                             <button onclick="deleteNews(${news.id})" class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 rounded-lg text-xs font-semibold transition-colors">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 Usuń
@@ -112,49 +137,75 @@ import Layout from '../../layouts/Layout.astro';
         }
     }
 
-    // 2. DODAWANIE NEWSA (CREATE)
+    // 2. FUNKCJE EDYCJI (UPDATE PREP)
+    window.startEdit = function(id) {
+        const targetNews = allNews.find(n => n.id === id);
+        if (!targetNews) return;
+
+        // Wypełniamy formularz danymi
+        editIdInput.value = targetNews.id;
+        titleInput.value = targetNews.title;
+        contentInput.value = targetNews.content;
+
+        // Zmieniamy wygląd formularza
+        formTitle.innerText = "Edytuj wpis";
+        submitBtn.innerText = "Zapisz zmiany";
+        cancelEditBtn.classList.remove('hidden');
+        
+        // Płynne przewinięcie do formularza (przydatne na telefonach)
+        form.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.cancelEdit = function() {
+        form.reset();
+        editIdInput.value = "";
+        formTitle.innerText = "Dodaj nowy wpis";
+        submitBtn.innerText = "Opublikuj wpis";
+        cancelEditBtn.classList.add('hidden');
+    };
+
+    // 3. WYSYŁANIE FORMULARZA (CREATE LUB UPDATE)
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        submitBtn.innerText = 'Publikowanie...';
+        const isEditMode = editIdInput.value !== "";
+        submitBtn.innerText = isEditMode ? 'Zapisywanie...' : 'Publikowanie...';
         submitBtn.disabled = true;
         formSuccess.classList.add('hidden');
 
         const formData = new FormData(form);
+        // Wybór odpowiedniego endpointu w zależności od trybu
+        const endpoint = isEditMode ? '/admin/update-news' : '/admin/dodaj-news';
 
         try {
-            await fetch('/admin/dodaj-news', { 
+            await fetch(endpoint, { 
                 method: 'POST',
                 body: formData 
             });
 
-            form.reset();
+            cancelEdit(); // Resetujemy formularz po sukcesie
+            formSuccess.innerText = isEditMode ? '✓ Zmiany zostały zapisane!' : '✓ Wpis został opublikowany!';
             formSuccess.classList.remove('hidden');
             setTimeout(() => formSuccess.classList.add('hidden'), 4000);
             
-            // Odświeżenie tabeli po dodaniu
             fetchNews();
         } catch (error) {
-            alert('Wystąpił błąd podczas dodawania wpisu.');
+            alert('Wystąpił błąd podczas zapisywania.');
         } finally {
-            submitBtn.innerText = 'Opublikuj wpis';
+            submitBtn.innerText = isEditMode ? 'Zapisz zmiany' : 'Opublikuj wpis';
             submitBtn.disabled = false;
         }
     });
 
-    // 3. USUWANIE NEWSA (DELETE)
+    // 4. USUWANIE NEWSA (DELETE)
     window.deleteNews = async function(id) {
-        if (!confirm('Czy na pewno chcesz usunąć ten wpis? Zniknie on ze strony natychmiast.')) {
-            return;
-        }
+        if (!confirm('Czy na pewno chcesz usunąć ten wpis?')) return;
 
         try {
-            const response = await fetch(`/admin/delete-news?id=${id}`, {
-                method: 'DELETE'
-            });
-
+            const response = await fetch(`/admin/delete-news?id=${id}`, { method: 'DELETE' });
             if (response.ok) {
-                // Odświeżenie tabeli po usunięciu
+                // Jeśli usunęliśmy wpis, który akurat edytowaliśmy, anulujemy edycję
+                if (editIdInput.value == id) cancelEdit(); 
                 fetchNews();
             } else {
                 alert('Błąd serwera podczas usuwania.');
@@ -164,6 +215,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     };
 
-    // Załadowanie wpisów od razu przy wejściu na stronę
+    // Inicjalizacja
     fetchNews();
 </script>
