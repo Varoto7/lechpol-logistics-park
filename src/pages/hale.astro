@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const hale = [
+    {
+        title: "Hala Magazynowa – Miętne",
+        image: "/hale/hala1.jpg",
+        area: "ok. 10 000 m²",
+        height: "10 m",
+        docks: "Doki + rampy '0'",
+        description: "Nowoczesny obiekt magazynowo-logistyczny położony bezpośrednio przy trasie S17 (węzeł Garwolin Zachód). Wyposażony w posadzkę bezpyłową o wysokiej nośności, ogrzewanie gazowe, instalację tryskaczową oraz plac manewrowy dla TIR."
+    }
+];
+---
+
+<Layout title="Hale Magazynowe | Lechpol Logistics Park">
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">Dostępne Hale Magazynowe</h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Poznaj nasze obiekty logistyczne zlokalizowane w Miętnem przy trasie S17.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {hale.map((hala) => (
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col group">
+                    <div class="h-64 overflow-hidden relative">
+                        <img src={hala.image} alt={hala.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-3">{hala.title}</h2>
+                        <p class="text-gray-600 mb-6 flex-grow leading-relaxed">{hala.description}</p>
+                        
+                        <div class="grid grid-cols-3 gap-4 border-t border-gray-100 pt-6 mt-auto">
+                            <div class="text-center">
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Powierzchnia</span>
+                                <span class="font-bold text-slate-900">{hala.area}</span>
+                            </div>
+                            <div class="text-center border-l border-gray-100">
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Wysokość</span>
+                                <span class="font-bold text-slate-900">{hala.height}</span>
+                            </div>
+                            <div class="text-center border-l border-gray-100">
+                                <span class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Doki</span>
+                                <span class="font-bold text-slate-900">{hala.docks}</span>
+                            </div>
+                        </div>
+
+                        <a href="/kontakt" class="mt-6 w-full text-center bg-slate-900 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition duration-300">
+                            Zapytaj o tę halę
+                        </a>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </main>
+</Layout>
