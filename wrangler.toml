@@ -4,7 +4,7 @@ pages_build_output_dir = "./dist"
 # Default / Preview Environment (Gałąź 'dev' lub wersje zapoznawcze)
 [[d1_databases]]
 binding = "DB"
-database_name = "lechpol-db-dev" # Nazwa Twojej obecnej bazy dev
+database_name = "lechpol-db" # Nazwa Twojej obecnej bazy dev
 database_id = "6474f8a1-5247-45e6-b253-3dc9e91d16de"
 
 # Production Environment (Gałąź 'main' / domena produkcyjna)
