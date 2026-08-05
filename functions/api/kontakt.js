@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
     const turnstileToken = formData.get("cf-turnstile-response");
 
     // 1. Weryfikacja antyspamowa Turnstile z serwerami Cloudflare
-    const secretKey = "0x4AAAAAAEGGv5EnRpy2SLctZ36_X_3yAx0";
+    const secretKey = env.TURNSTILE_SECRET_KEY;
     const clientIp = request.headers.get("CF-Connecting-IP");
 
     const verifyData = new FormData();
