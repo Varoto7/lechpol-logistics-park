@@ -130,25 +130,24 @@ import Layout from '../../layouts/Layout.astro';
             const data = await response.json();
             
             if (!Array.isArray(data) || data.length === 0) {
-                if (page === 1) {
-                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak opublikowanych aktualności.</td></tr>`;
-                } else {
-                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak kolejnych wpisów na tej stronie.</td></tr>`;
-                }
-
+                tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak opublikowanych aktualności.</td></tr>`;
                 if (nextBtn) nextBtn.disabled = true;
                 if (prevBtn) prevBtn.disabled = (page === 1);
                 return;
             }
 
-            allNews = data; // Zapisujemy aktualną stronę do zmiennej globalnej
+            // Sprawdzamy czy backend zwrócił więcej niż 20 elementów (21-szy to dowód na istnienie kolejnej strony)
+            const hasNextPage = data.length > PAGE_SIZE;
+            const itemsToRender = hasNextPage ? data.slice(0, PAGE_SIZE) : data;
+
+            allNews = itemsToRender; 
             currentPage = page;
 
             if (pageIndicator) pageIndicator.innerText = `Strona ${currentPage}`;
             if (prevBtn) prevBtn.disabled = (currentPage === 1);
-            if (nextBtn) nextBtn.disabled = (data.length < PAGE_SIZE);
+            if (nextBtn) nextBtn.disabled = !hasNextPage;
 
-            tableBody.innerHTML = data.map(news => {
+            tableBody.innerHTML = itemsToRender.map(news => {
                 const dateObj = new Date(news.created_at);
                 const formattedDate = dateObj.toLocaleDateString('pl-PL');
                 const shortContent = news.content.length > 60 ? news.content.substring(0, 60) + '...' : news.content;
@@ -163,12 +162,10 @@ import Layout from '../../layouts/Layout.astro';
                             ${shortContent}
                         </td>
                         <td class="p-4 text-right align-top whitespace-nowrap">
-                            <!-- Przycisk Edytuj -->
                             <button onclick="startEdit(${news.id})" class="inline-flex items-center px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 dark:text-amber-400 rounded-lg text-xs font-semibold transition-colors mr-2">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 Edytuj
                             </button>
-                            <!-- Przycisk Usuń -->
                             <button onclick="deleteNews(${news.id})" class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 rounded-lg text-xs font-semibold transition-colors">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 Usuń
@@ -182,7 +179,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     }
 
-    // Zmiana stron
     window.changePage = function(delta) {
         const newPage = currentPage + delta;
         if (newPage >= 1) {
@@ -190,7 +186,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     };
 
-    // 2. FUNKCJE EDYCJI (UPDATE PREP)
     window.startEdit = function(id) {
         const targetNews = allNews.find(n => n.id === id);
         if (!targetNews) return;
@@ -214,7 +209,6 @@ import Layout from '../../layouts/Layout.astro';
         cancelEditBtn.classList.add('hidden');
     };
 
-    // 3. WYSYŁANIE FORMULARZA (CREATE LUB UPDATE)
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -246,7 +240,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     });
 
-    // 4. USUWANIE NEWSA (DELETE)
     window.deleteNews = async function(id) {
         if (!confirm('Czy na pewno chcesz usunąć ten wpis?')) return;
 
@@ -263,6 +256,5 @@ import Layout from '../../layouts/Layout.astro';
         }
     };
 
-    // Inicjalizacja
     fetchNews(1);
 </script>

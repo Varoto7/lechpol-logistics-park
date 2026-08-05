@@ -6,16 +6,15 @@ export async function onRequestGet(context) {
       return new Response(JSON.stringify({ error: "Brak połączenia z bazą danych" }), { status: 500 });
     }
 
-    // Odczytujemy numer strony z adresu URL (domyślnie strona 1)
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = 20; // Liczba wiadomości na stronę
+    const limit = 20; 
     const offset = (page - 1) * limit;
 
-    // Pobranie konkretnej paczki wiadomości
+    // Pobieramy 21 elementów (20 dla widoku + 1 do sprawdzenia, czy istnieje kolejna strona)
     const { results } = await env.DB.prepare(
       "SELECT * FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?"
-    ).bind(limit, offset).all();
+    ).bind(limit + 1, offset).all();
 
     return new Response(JSON.stringify(results), {
       headers: { "Content-Type": "application/json" },

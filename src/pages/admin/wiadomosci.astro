@@ -106,30 +106,25 @@ import Layout from '../../layouts/Layout.astro';
             }
 
             if (!Array.isArray(data) || data.length === 0) {
-                if (page === 1) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Skrzynka jest pusta.</td></tr>`;
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak kolejnych wiadomości na tej stronie.</td></tr>`;
-                }
-                
-                // Wyłączamy przycisk "Następna" jeśli brak wyników
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Skrzynka jest pusta.</td></tr>`;
                 if (nextBtn) nextBtn.disabled = true;
                 if (prevBtn) prevBtn.disabled = (page === 1);
                 return;
             }
 
-            // Aktualizacja zmiennych stanu i widoku
-            fetchedMessages = data;
+            // Sprawdzamy czy backend zwrócił więcej niż 20 elementów (21-szy to dowód na istnienie kolejnej strony)
+            const hasNextPage = data.length > PAGE_SIZE;
+            const itemsToRender = hasNextPage ? data.slice(0, PAGE_SIZE) : data;
+
+            fetchedMessages = itemsToRender;
             currentPage = page;
 
             if (exportBtn) exportBtn.disabled = false;
             if (pageIndicator) pageIndicator.innerText = `Strona ${currentPage}`;
             if (prevBtn) prevBtn.disabled = (currentPage === 1);
-            
-            // Jeśli przyszło dokładnie PAGE_SIZE (20) elementów, istnieje szansa na następną stronę
-            if (nextBtn) nextBtn.disabled = (data.length < PAGE_SIZE);
+            if (nextBtn) nextBtn.disabled = !hasNextPage;
 
-            tbody.innerHTML = data.map(msg => {
+            tbody.innerHTML = itemsToRender.map(msg => {
                 const dateObj = new Date(msg.created_at);
                 const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
 
@@ -153,7 +148,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     }
 
-    // Funkcja do zmiany stron
     window.changePage = function(delta) {
         const newPage = currentPage + delta;
         if (newPage >= 1) {
@@ -161,7 +155,6 @@ import Layout from '../../layouts/Layout.astro';
         }
     };
 
-    // Funkcja pobierania CSV
     window.exportToCSV = function() {
         if (!fetchedMessages || fetchedMessages.length === 0) return;
 
