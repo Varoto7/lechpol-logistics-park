@@ -10,7 +10,8 @@ Oficjalny serwis internetowy nowoczesnego parku logistycznego Lechpol zlokalizow
 * **Stylizowanie:** [Tailwind CSS](https://tailwindcss.com/)
 * **Hosting & CDN:** [Cloudflare Pages](https://pages.cloudflare.com/) (Globalna sieć dostarczania treści)
 * **Baza Danych:** [Cloudflare D1](https://developers.cloudflare.com/d1/) (Serverless SQL oparty na SQLite)
-* **Bezpieczeństwo (Kłódka):** [Cloudflare Zero Trust / Access](https://zero-trust.cloudflare.com/)
+* **Bezpieczeństwo (Ochrona przed botami):** [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/)
+* **Bezpieczeństwo (Panel Admina):** [Cloudflare Zero Trust / Access](https://zero-trust.cloudflare.com/)
 
 ---
 
@@ -27,55 +28,70 @@ Podstrona z ofertą hal (`/hale`) jest generowana statycznie dla maksymalnej szy
 
 ---
 
-## 🗄️ System Aktualności i Baza Danych (Cloudflare D1)
+## 🗄️ System Aktualności i Baza Danych (Cloudflare D1) – Pełny CRUD
 
-Strona posiada dynamiczny system aktualności (newsów), który pozwala na dodawanie ogłoszeń bez ingerencji w kod źródłowy.
+Strona posiada w pełni funkcjonalny, chroniony panel administracyjny umożliwiający zarządzanie aktualnościami w cyklu **CRUD** (Create, Read, Update, Delete) bezpośrednio w bazie D1 bez ingerencji w kod źródłowy.
 
 ### Schemat Tabeli (`news`)
-Baza tworzy tabelę automatycznie przy pierwszej próbie wysłania newsa.
-
 | Nazwa kolumny | Typ danych | Opis |
 | :--- | :--- | :--- |
 | `id` | `INTEGER` | Główny identyfikator wpisu (Primary Key, Auto Increment) |
 | `title` | `TEXT` | Tytuł aktualności |
-| `content` | `TEXT` | Treść wpisu (obsługuje formatowanie tekstowe z formularza) |
+| `content` | `TEXT` | Treść wpisu |
 | `created_at` | `TEXT` | Data utworzenia wpisu (generowana przez `datetime('now')`) |
 
-### Przepływ Danych (End-to-End)
-1. **Zapis do bazy:** Formularz w `/admin/dodaj-news` wysyła żądanie `POST` do funkcji brzegowej `functions/admin/dodaj-news.js`, która wykonuje `INSERT INTO` do bazy D1.
-2. **Odczyt z bazy:** Podstrona `/aktualnosci` ładuje się błyskawicznie, a następnie w tle asynchronicznie odpytuje endpoint `functions/api/get-news.js` (`SELECT * FROM news ORDER BY created_at DESC`).
-3. **Prezentacja:** Skrypt na frontendzie zamienia otrzymany JSON na estetyczne kafelki (karty) z wiadomościami.
+### Funkcjonalności Panelu Admina (`/admin/dodaj-news`)
+* **Dodawanie (Create):** Formularz wysyła żądanie `POST` do funkcji brzegowej `/admin/dodaj-news`, zapisując nowy wpis.
+* **Odczyt (Read):** Dynamiczna tabela asynchronicznie pobiera i wyświetla opublikowane aktualności.
+* **Edycja (Update):** Kliknięcie przycisku "Edytuj" wczytuje dane do formularza, umożliwiając szybką modyfikację wpisu przez endpoint `/admin/update-news`.
+* **Usuwanie (Delete):** Natychmiastowe usunięcie wybranego wpisu z bazy za pomocą żądania `DELETE` (`/admin/delete-news?id=...`).
 
 ---
 
-## 🔒 Bezpieczeństwo Panelu Administratora
+## ✉️ Formularz Kontaktowy i Skrzynka Odbiorcza
 
-Aby uchronić bazę przed spamem i niepowołanym dostępem, wprowadziliśmy logowanie w oparciu o sieć Cloudflare.
+Podstrona kontaktowa (`/kontakt`) została zaprojektowana z myślą o najwyższym standardzie UX oraz bezpieczeństwie:
+* **Interaktywne dane:** Adres fizyczny przekierowuje bezpośrednio do map Google, numer telefonu inicjuje połączenie komórkowe, a adres e-mail uruchamia domyślnego klienta poczty.
+* **Kopiowanie do schowka:** Przy danych kontaktowych znajdują się przyciski umożliwiające skopiowanie numeru lub maila jednym kliknięciem z wizualnym potwierdzeniem.
+* **Ochrona Turnstile:** Formularz jest zabezpieczony dyskretnym widgetem antyspamowym Cloudflare Turnstile, który blokuje boty po stronie frontendu i weryfikuje token na backendzie (`/api/kontakt`).
+* **Zapis do D1:** Wiadomości od klientów trafiają do tabeli `messages` w bazie D1.
+* **Panel Wiadomości i Eksport CSV (`/admin/wiadomosci`):** Administratorzy mogą przeglądać nadesłane wiadomości oraz wyeksportować całą skrzynkę do pliku w formacie `.csv` (z zachowaniem kodowania UTF-8/BOM dla prawidłowego wyświetlania polskich znaków w MS Excel).
 
-1. **Cloudflare Zero Trust:** Cały ruch do ścieżek zaczynających się od `/admin*` jest przechwytywany i blokowany na poziomie serwerów brzegowych.
-2. **Brak haseł (One-Time PIN):** Autoryzacja odbywa się bez tradycyjnego hasła. Użytkownik wpisuje autoryzowany adres e-mail i otrzymuje na skrzynkę jednorazowy, 6-cyfrowy kod PIN.
-3. **Kontrola Dostępu:** Reguły w panelu Cloudflare (Policies) precyzyjnie określają, który konkretnie adres e-mail ma prawo otrzymać kod i wejść do formularza dodawania newsów.
+---
+
+## 🔒 Bezpieczeństwo Panelu Administratora (Zero Trust)
+
+Cała sekcja administracyjna (`/admin/*`) oraz skrypty modyfikujące bazę danych zostały hermetycznie zamknięte za pomocą **Cloudflare Zero Trust (Access)**:
+1. **Ochrona ścieżki:** Każdy ruch do folderu `/admin/` (w tym podstrony i ukryte endpointy API) jest przechwytywany na brzegowych serwerach Cloudflare.
+2. **Logowanie OTP (One-Time PIN):** Dostęp wymaga podania autoryzowanego adresu e-mail oraz przepisania jednorazowego, 6-cyfrowego kodu PIN wysłanego na skrzynkę pocztową.
+3. **Multi-User Control:** Polityki dostępowe (Access Policies) pozwalają na łatwe autoryzowanie wielu administratorów (np. twórcy projektu oraz opiekuna praktyk) bez konieczności dzielenia się hasłami.
 
 ---
 
 ## 📂 Struktura Katalogów
 
 ```text
-├── functions/               # Funkcje backendowe Cloudflare (Serverless Edge)
-│   ├── admin/
-│   │   └── dodaj-news.js    # Zapisywanie newsów do D1
-│   └── api/
-│       └── get-news.js      # Publiczne API zwracające aktualności
+├── functions/                     # Funkcje backendowe Cloudflare (Serverless Edge)
+│   ├── admin/                     # Chronione endpointy (Wymagają logowania Zero Trust)
+│   │   ├── dodaj-news.js          # Dodawanie nowych wpisów do D1
+│   │   ├── update-news.js         # Edycja istniejących wpisów
+│   │   ├── delete-news.js         # Usuwanie wpisów
+│   │   └── get-messages.js        # Pobieranie wiadomości z formularza kontaktowego
+│   └── api/                       # Publiczne endpointy
+│       ├── get-news.js            # Pobieranie aktualności dla użytkowników
+│       └── kontakt.js             # Obsługa formularza kontaktowego + weryfikacja Turnstile
 │
-├── public/                  # Pliki statyczne serwowane bezpośrednio
-│   └── hale/                # Zdjęcia obiektów logistycznych
+├── public/                        # Pliki statyczne serwowane bezpośrednio
+│   └── hale/                      # Zdjęcia obiektów logistycznych
 │
 └── src/
-    ├── components/          # Elementy wielokrotnego użytku (Navbar, Footer itp.)
-    ├── layouts/             # Główny szablon (szkielet HTML strony)
-    └── pages/               # Routing - każda podstrona to osobny plik .astro
-        ├── admin/           # Zastrzeżony interfejs
-        ├── aktualnosci.astro# Pobieranie i wyświetlanie nowości
-        ├── hale.astro       # Pętla generująca ofertę hal
-        ├── index.astro      # Strona główna projektu
-        └── kontakt.astro    # Dane kontaktowe
+    ├── components/                # Elementy wielokrotnego użytku (Navbar, Footer itp.)
+    ├── layouts/                   # Główny szablon (szkielet HTML strony)
+    └── pages/                     # Routing - każda podstrona to osobny plik .astro
+        ├── admin/                 # Zastrzeżony interfejs administracyjny
+        │   ├── dodaj-news.astro   # Panel zarządzania newsami (CRUD)
+        │   └── wiadomosci.astro   # Skrzynka odbiorcza + eksport do CSV
+        ├── aktualnosci.astro      # Publiczna strona z aktualnościami
+        ├── hale.astro             # Pętla generująca ofertę hal
+        ├── index.astro            # Strona główna projektu
+        └── kontakt.astro          # Interaktywny kontakt + formularz z Turnstile
