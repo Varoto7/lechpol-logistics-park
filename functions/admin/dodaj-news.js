@@ -9,15 +9,8 @@ export async function onRequestPost(context) {
       return Response.redirect(new URL('/admin/dodaj-news?status=error', request.url), 302);
     }
 
-    // Automatycznie tworzymy nową tabelę 'news' jeśli jeszcze nie istnieje
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS news (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        content TEXT,
-        created_at TEXT
-      )
-    `).run();
+    // Usunęliśmy stąd blok CREATE TABLE. 
+    // Od teraz zakładamy, że tabela już istnieje dzięki mechanizmowi migracji.
 
     // Dodajemy newsa do bazy
     await env.DB.prepare(

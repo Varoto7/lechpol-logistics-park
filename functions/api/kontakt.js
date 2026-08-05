@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
     const turnstileToken = formData.get("cf-turnstile-response");
 
     // 1. Weryfikacja antyspamowa Turnstile z serwerami Cloudflare
-    const secretKey = "0x4AAAAAAEGGv5EnRpy2SLctZ36_X_3yAx0"; // Twój Secret Key z panelu
+    const secretKey = "0x4AAAAAAEGGv5EnRpy2SLctZ36_X_3yAx0";
     const clientIp = request.headers.get("CF-Connecting-IP");
 
     const verifyData = new FormData();
@@ -32,16 +32,7 @@ export async function onRequestPost(context) {
       return Response.redirect(new URL('/kontakt?status=nodb', request.url), 302);
     }
 
-    // 3. Tworzenie tabeli i zapis danych
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT,
-        message TEXT,
-        created_at TEXT
-      )
-    `).run();
-
+    // 3. Zapis danych (Bez zapytania CREATE TABLE – obsługiwane przez D1 Migrations)
     await env.DB.prepare(
       "INSERT INTO messages (email, message, created_at) VALUES (?, ?, datetime('now'))"
     ).bind(email, message).run();
