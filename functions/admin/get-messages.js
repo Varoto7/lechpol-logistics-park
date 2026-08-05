@@ -1,15 +1,21 @@
 export async function onRequestGet(context) {
   try {
-    const { env } = context;
+    const { env, request } = context;
 
     if (!env || !env.DB) {
-      return new Response(JSON.stringify({ error: "Brak bazy danych" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Brak połączenia z bazą danych" }), { status: 500 });
     }
 
-    // Pobranie wszystkich wiadomości z bazy (sortowanie od najnowszych)
+    // Odczytujemy numer strony z adresu URL (domyślnie strona 1)
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = 20; // Liczba wiadomości na stronę
+    const offset = (page - 1) * limit;
+
+    // Pobranie konkretnej paczki wiadomości
     const { results } = await env.DB.prepare(
-      "SELECT * FROM messages ORDER BY created_at DESC"
-    ).all();
+      "SELECT * FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    ).bind(limit, offset).all();
 
     return new Response(JSON.stringify(results), {
       headers: { "Content-Type": "application/json" },

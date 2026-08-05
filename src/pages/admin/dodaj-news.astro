@@ -68,6 +68,31 @@ import Layout from '../../layouts/Layout.astro';
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Nawigacja Stronicowania (Paginacja) -->
+                <div class="p-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                    <button 
+                        id="prevBtn" 
+                        onclick="changePage(-1)" 
+                        disabled
+                        class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        ← Poprzednia
+                    </button>
+
+                    <span id="pageIndicator" class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        Strona 1
+                    </span>
+
+                    <button 
+                        id="nextBtn" 
+                        onclick="changePage(1)" 
+                        disabled
+                        class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Następna →
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -87,21 +112,41 @@ import Layout from '../../layouts/Layout.astro';
     const titleInput = document.getElementById('title');
     const contentInput = document.getElementById('content');
 
-    // Globalna tablica, by mieć dostęp do pełnych treści przy kliknięciu "Edytuj"
+    // Globalne zmienne do paginacji
     let allNews = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 20;
 
-    // 1. POBIERANIE (READ)
-    async function fetchNews() {
+    // 1. POBIERANIE (READ) Z PAGINACJĄ
+    async function fetchNews(page = 1) {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('pageIndicator');
+
+        tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Ładowanie wpisów...</td></tr>`;
+
         try {
-            const response = await fetch('/api/get-news');
+            const response = await fetch(`/api/get-news?page=${page}`);
             const data = await response.json();
             
-            allNews = data; // Zapisujemy do zmiennej globalnej
-
             if (!Array.isArray(data) || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak opublikowanych aktualności.</td></tr>`;
+                if (page === 1) {
+                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak opublikowanych aktualności.</td></tr>`;
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Brak kolejnych wpisów na tej stronie.</td></tr>`;
+                }
+
+                if (nextBtn) nextBtn.disabled = true;
+                if (prevBtn) prevBtn.disabled = (page === 1);
                 return;
             }
+
+            allNews = data; // Zapisujemy aktualną stronę do zmiennej globalnej
+            currentPage = page;
+
+            if (pageIndicator) pageIndicator.innerText = `Strona ${currentPage}`;
+            if (prevBtn) prevBtn.disabled = (currentPage === 1);
+            if (nextBtn) nextBtn.disabled = (data.length < PAGE_SIZE);
 
             tableBody.innerHTML = data.map(news => {
                 const dateObj = new Date(news.created_at);
@@ -137,22 +182,27 @@ import Layout from '../../layouts/Layout.astro';
         }
     }
 
+    // Zmiana stron
+    window.changePage = function(delta) {
+        const newPage = currentPage + delta;
+        if (newPage >= 1) {
+            fetchNews(newPage);
+        }
+    };
+
     // 2. FUNKCJE EDYCJI (UPDATE PREP)
     window.startEdit = function(id) {
         const targetNews = allNews.find(n => n.id === id);
         if (!targetNews) return;
 
-        // Wypełniamy formularz danymi
         editIdInput.value = targetNews.id;
         titleInput.value = targetNews.title;
         contentInput.value = targetNews.content;
 
-        // Zmieniamy wygląd formularza
         formTitle.innerText = "Edytuj wpis";
         submitBtn.innerText = "Zapisz zmiany";
         cancelEditBtn.classList.remove('hidden');
         
-        // Płynne przewinięcie do formularza (przydatne na telefonach)
         form.scrollIntoView({ behavior: 'smooth' });
     };
 
@@ -174,7 +224,6 @@ import Layout from '../../layouts/Layout.astro';
         formSuccess.classList.add('hidden');
 
         const formData = new FormData(form);
-        // Wybór odpowiedniego endpointu w zależności od trybu
         const endpoint = isEditMode ? '/admin/update-news' : '/admin/dodaj-news';
 
         try {
@@ -183,12 +232,12 @@ import Layout from '../../layouts/Layout.astro';
                 body: formData 
             });
 
-            cancelEdit(); // Resetujemy formularz po sukcesie
+            cancelEdit();
             formSuccess.innerText = isEditMode ? '✓ Zmiany zostały zapisane!' : '✓ Wpis został opublikowany!';
             formSuccess.classList.remove('hidden');
             setTimeout(() => formSuccess.classList.add('hidden'), 4000);
             
-            fetchNews();
+            fetchNews(currentPage);
         } catch (error) {
             alert('Wystąpił błąd podczas zapisywania.');
         } finally {
@@ -204,9 +253,8 @@ import Layout from '../../layouts/Layout.astro';
         try {
             const response = await fetch(`/admin/delete-news?id=${id}`, { method: 'DELETE' });
             if (response.ok) {
-                // Jeśli usunęliśmy wpis, który akurat edytowaliśmy, anulujemy edycję
                 if (editIdInput.value == id) cancelEdit(); 
-                fetchNews();
+                fetchNews(currentPage);
             } else {
                 alert('Błąd serwera podczas usuwania.');
             }
@@ -216,5 +264,5 @@ import Layout from '../../layouts/Layout.astro';
     };
 
     // Inicjalizacja
-    fetchNews();
+    fetchNews(1);
 </script>
