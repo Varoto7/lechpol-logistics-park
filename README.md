@@ -68,6 +68,18 @@ Cała sekcja administracyjna (`/admin/*`) oraz skrypty modyfikujące bazę danyc
 
 ---
 
+### 🗄️ Baza danych i Migracje (D1 Migrations)
+- **Przejście na oficjalny mechanizm migracji:** Usunięto dynamiczne zapytania `CREATE TABLE IF NOT EXISTS` z poziomów endpointów API backendu (`dodaj-news.js`, `kontakt.js`). Struktura bazy danych została przeniesiona do dedykowanych plików w folderze `migrations/`.
+- **Automatyzacja struktury:** Wdrażanie zmian w strukturze bazy odbywa się w procesie deploymentu/CI/CD za pomocą komendy `wrangler d1 migrations apply`.
+
+### 🔐 Bezpieczeństwo i Sekrety
+- **Zmienne Środowiskowe (Environment Variables):** Usunięto wycieknięty klucz `TURNSTILE_SECRET_KEY` z kodu źródłowego. Przeniesiono zarządzanie sekretami bezpośrednio do zmiennych środowiskowych Cloudflare Pages (`env.TURNSTILE_SECRET_KEY`) w środowiskach *Production* i *Preview*.
+- **Ochrona przed SQL Injection:** Wszystkie zapytania do bazy danych korzystają wyłącznie ze sparametryzowanych metod (`.bind()`).
+
+### ⚡ Skalowanie i Paginacja (Performance & Pagination)
+- **Optymalizacja zapytań SQL:** Wszystkie endpointy pobierające wiadomości i aktualności (`get-messages.js`, `get-news.js`) otrzymały limity pobierania danych z bazy (`LIMIT` + `OFFSET`), zabezpieczając aplikację przed nadmiernym zużyciem zasobów Cloudflare.
+- **Paginacja po stronie widoków:** W panelu administratora (`wiadomosci.astro` oraz `dodaj-news.astro`) wdrożono dwukierunkowe stronicowanie (paczkowanie po 20 elementów) z inteligentnym wykrywaniem dostępności kolejnych stron na backendzie.
+
 ## 📂 Struktura Katalogów
 
 ```text
