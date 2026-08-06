@@ -52,21 +52,52 @@ import Layout from '../../layouts/Layout.astro';
                     </tbody>
                 </table>
             </div>
+
+            <!-- Nawigacja Stronicowania (Paginacja) -->
+            <div class="p-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                <button 
+                    id="prevBtn" 
+                    onclick="changePage(-1)" 
+                    disabled
+                    class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    ← Poprzednia
+                </button>
+
+                <span id="pageIndicator" class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                    Strona 1
+                </span>
+
+                <button 
+                    id="nextBtn" 
+                    onclick="changePage(1)" 
+                    disabled
+                    class="px-3 py-1.5 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    Następna →
+                </button>
+            </div>
         </div>
 
     </main>
 </Layout>
 
 <script is:inline>
-    // Globalna zmienna do przechowywania wiadomości do eksportu
     let fetchedMessages = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 20;
 
-    async function fetchMessages() {
+    async function fetchMessages(page = 1) {
         const tbody = document.getElementById('messagesTableBody');
         const exportBtn = document.getElementById('exportBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageIndicator = document.getElementById('pageIndicator');
+
+        tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Ładowanie wiadomości...</td></tr>`;
 
         try {
-            const response = await fetch('/admin/get-messages');
+            const response = await fetch(`/admin/get-messages?page=${page}`);
             const data = await response.json();
             
             if (data.error) {
@@ -76,14 +107,24 @@ import Layout from '../../layouts/Layout.astro';
 
             if (!Array.isArray(data) || data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-500 dark:text-gray-400">Skrzynka jest pusta.</td></tr>`;
+                if (nextBtn) nextBtn.disabled = true;
+                if (prevBtn) prevBtn.disabled = (page === 1);
                 return;
             }
 
-            // Zapisujemy pobrane dane globalnie i aktywujemy przycisk eksportu
-            fetchedMessages = data;
-            if (exportBtn) exportBtn.disabled = false;
+            // Sprawdzamy czy backend zwrócił więcej niż 20 elementów (21-szy to dowód na istnienie kolejnej strony)
+            const hasNextPage = data.length > PAGE_SIZE;
+            const itemsToRender = hasNextPage ? data.slice(0, PAGE_SIZE) : data;
 
-            tbody.innerHTML = data.map(msg => {
+            fetchedMessages = itemsToRender;
+            currentPage = page;
+
+            if (exportBtn) exportBtn.disabled = false;
+            if (pageIndicator) pageIndicator.innerText = `Strona ${currentPage}`;
+            if (prevBtn) prevBtn.disabled = (currentPage === 1);
+            if (nextBtn) nextBtn.disabled = !hasNextPage;
+
+            tbody.innerHTML = itemsToRender.map(msg => {
                 const dateObj = new Date(msg.created_at);
                 const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
 
@@ -107,19 +148,22 @@ import Layout from '../../layouts/Layout.astro';
         }
     }
 
-    // Funkcja pobierania CSV
+    window.changePage = function(delta) {
+        const newPage = currentPage + delta;
+        if (newPage >= 1) {
+            fetchMessages(newPage);
+        }
+    };
+
     window.exportToCSV = function() {
         if (!fetchedMessages || fetchedMessages.length === 0) return;
 
-        // Nagłówki kolumn w pliku CSV
         const headers = ["ID", "Data", "Email", "Tresc Wiadomosci"];
         
-        // Mapowanie wiadomości na wiersze CSV
         const rows = fetchedMessages.map(msg => {
             const dateObj = new Date(msg.created_at);
             const formattedDate = dateObj.toLocaleDateString('pl-PL') + ' ' + dateObj.toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
             
-            // Zastępujemy znaki nowej linii i cudzysłowy, aby nie rozbić struktury tabeli w Excelu
             const cleanMessage = (msg.message || '').replace(/"/g, '""').replace(/\n/g, ' ');
             
             return [
@@ -130,23 +174,19 @@ import Layout from '../../layouts/Layout.astro';
             ];
         });
 
-        // Łączymy nagłówki i wiersze przecinkami / średnikami (standard dla polskich wersji Excela)
         const csvContent = [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
-
-        // Tworzymy plik z widocznym znakiem BOM (\uFEFF), dzięki czemu Excel odczyta polskie znaki (UTF-8)
         const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         
-        // Generowanie nazwy pliku z dzisiejszą datą, np. wiadomosci_lechpol_2026-08-04.csv
         const today = new Date().toISOString().split('T')[0];
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `wiadomosci_lechpol_${today}.csv`);
+        link.setAttribute('download', `wiadomosci_lechpol_strona_${currentPage}_${today}.csv`);
         document.body.appendChild(link);
         
         link.click();
         document.body.removeChild(link);
     };
 
-    fetchMessages();
+    fetchMessages(1);
 </script>
