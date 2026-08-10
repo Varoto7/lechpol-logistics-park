@@ -104,16 +104,25 @@ import Layout from '../../layouts/Layout.astro';
             const response = await fetch('/api/get-zones');
             allZones = await response.json();
 
-            if (Object.keys(allZones).length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Brak stref w bazie danych.</td></tr>`;
+            // 1. Sprawdzamy, czy serwer nie zwrócił błędu
+            if (allZones.error) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">Błąd bazy D1: ${allZones.error}</td></tr>`;
                 return;
             }
 
-            tableBody.innerHTML = Object.keys(allZones).map(id => {
+            // 2. Sprawdzamy czy mamy dane w obiekcie
+            const keys = Object.keys(allZones);
+            if (keys.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Brak stref w bazie danych. Wykonaj migrację SQL.</td></tr>`;
+                return;
+            }
+
+            // 3. Generujemy wiersze tabeli
+            tableBody.innerHTML = keys.map(id => {
                 const zone = allZones[id];
-                
-                // Odznaki statusu
-                let statusBadge = '';
+                if (!zone || typeof zone !== 'object') return '';
+
+                let statusBadge = '<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">Nieokreślony</span>';
                 if (zone.status === 'dostepna') statusBadge = '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Dostępna</span>';
                 if (zone.status === 'rezerwacja') statusBadge = '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">Rezerwacja</span>';
                 if (zone.status === 'wynajeta') statusBadge = '<span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Wynajęta</span>';
@@ -121,17 +130,17 @@ import Layout from '../../layouts/Layout.astro';
                 return `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                         <td class="p-4 align-middle">
-                            <span class="block text-sm font-bold text-slate-900 dark:text-white">${zone.nazwa}</span>
-                            <span class="block text-xs text-gray-500">ID: ${zone.id}</span>
+                            <span class="block text-sm font-bold text-slate-900 dark:text-white">${zone.nazwa || 'Brak nazwy'}</span>
+                            <span class="block text-xs text-gray-500">ID: ${zone.id || id}</span>
                         </td>
                         <td class="p-4 text-sm text-slate-700 dark:text-gray-300 align-middle">
-                            ${zone.powierzchnia}
+                            ${zone.powierzchnia || '-'}
                         </td>
                         <td class="p-4 align-middle">
                             ${statusBadge}
                         </td>
                         <td class="p-4 text-right align-middle">
-                            <button onclick="startEdit('${zone.id}')" class="inline-flex items-center px-3 py-1.5 bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 rounded-lg text-xs font-semibold transition-colors">
+                            <button onclick="startEdit('${zone.id || id}')" class="inline-flex items-center px-3 py-1.5 bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 rounded-lg text-xs font-semibold transition-colors">
                                 Edytuj
                             </button>
                         </td>
@@ -139,7 +148,8 @@ import Layout from '../../layouts/Layout.astro';
                 `;
             }).join('');
         } catch (error) {
-            tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">Błąd połączenia z bazą.</td></tr>`;
+            console.error("Fetch zones error:", error);
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">Błąd połączenia z API mapy (/api/get-zones).</td></tr>`;
         }
     }
 
@@ -147,12 +157,12 @@ import Layout from '../../layouts/Layout.astro';
         const zone = allZones[id];
         if (!zone) return;
 
-        document.getElementById('editId').value = zone.id;
-        document.getElementById('displayId').value = zone.id;
-        document.getElementById('nazwa').value = zone.nazwa;
-        document.getElementById('powierzchnia').value = zone.powierzchnia;
-        document.getElementById('status').value = zone.status;
-        document.getElementById('opis').value = zone.opis;
+        document.getElementById('editId').value = zone.id || id;
+        document.getElementById('displayId').value = zone.id || id;
+        document.getElementById('nazwa').value = zone.nazwa || '';
+        document.getElementById('powierzchnia').value = zone.powierzchnia || '';
+        document.getElementById('status').value = zone.status || 'dostepna';
+        document.getElementById('opis').value = zone.opis || '';
 
         submitBtn.innerText = "Zapisz zmiany na mapie";
         submitBtn.disabled = false;
@@ -169,15 +179,20 @@ import Layout from '../../layouts/Layout.astro';
 
         try {
             const formData = new FormData(form);
-            await fetch('/admin/update-zone', { method: 'POST', body: formData });
+            const res = await fetch('/admin/update-zone', { method: 'POST', body: formData });
+            
+            if (!res.ok) {
+                throw new Error("Błąd sieci HTTP " + res.status);
+            }
 
             formSuccess.classList.remove('hidden');
             setTimeout(() => formSuccess.classList.add('hidden'), 3000);
             
-            // Odśwież tabelę
+            // Odświeżamy listę stref
             fetchZones();
         } catch (error) {
-            alert('Błąd podczas zapisywania.');
+            console.error("Update error:", error);
+            alert('Błąd podczas zapisywania zmian w bazie D1.');
         } finally {
             submitBtn.innerText = 'Zapisz zmiany na mapie';
             submitBtn.disabled = false;
