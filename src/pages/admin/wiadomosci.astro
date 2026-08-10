@@ -5,7 +5,8 @@ import Layout from '../../layouts/Layout.astro';
 <Layout title="Panel Admina | Wiadomości">
     <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <!-- Nagłówek -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Skrzynka Wiadomości</h1>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Przeglądaj zapytania ofertowe wysłane przez formularz kontaktowy</p>
@@ -16,24 +17,24 @@ import Layout from '../../layouts/Layout.astro';
             </a>
         </div>
             
-            <div class="flex items-center gap-3">
-                <!-- Przycisk eksportu CSV -->
-                <button 
-                    id="exportBtn" 
-                    onclick="exportToCSV()" 
-                    disabled
-                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl transition duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Pobierz do CSV
-                </button>
+        <!-- Akcje (Przyciski) -->
+        <div class="flex items-center gap-3 mb-8">
+            <!-- Przycisk eksportu CSV -->
+            <button 
+                id="exportBtn" 
+                onclick="exportToCSV()" 
+                disabled
+                class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl transition duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Pobierz do CSV
+            </button>
 
-                <a href="/admin/dodaj-news" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 font-medium text-sm rounded-xl transition duration-200">
-                    ← Wróć do newsów
-                </a>
-            </div>
+            <a href="/admin/dodaj-news" class="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 font-medium text-sm rounded-xl transition duration-200">
+                ← Wróć do newsów
+            </a>
         </div>
 
         <!-- Tabela z wiadomościami -->
@@ -116,7 +117,6 @@ import Layout from '../../layouts/Layout.astro';
                 return;
             }
 
-            // Sprawdzamy czy backend zwrócił więcej niż 20 elementów (21-szy to dowód na istnienie kolejnej strony)
             const hasNextPage = data.length > PAGE_SIZE;
             const itemsToRender = hasNextPage ? data.slice(0, PAGE_SIZE) : data;
 
