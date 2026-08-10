@@ -1,0 +1,203 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Panel Admina | Strefy Mapy">
+    <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+        
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Interaktywna Mapa</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Edytuj dane hal i stref logistycznych na mapie (statusy zaktualizują kolory automatycznie)</p>
+            </div>
+            <a href="/admin/wiadomosci" class="text-sky-500 hover:text-sky-600 font-medium transition-colors">Wróć do wiadomości →</a>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            
+            <!-- Lewa Kolumna: Formularz edycji -->
+            <div class="lg:col-span-1 h-fit bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+                
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Edytuj strefę</h2>
+                
+                <div id="formSuccess" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                    ✓ Zmiany zapisane na mapie!
+                </div>
+
+                <form id="editZoneForm" class="space-y-4">
+                    <input type="hidden" id="editId" name="id" value="" />
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">ID Obiektu (z SVG)</label>
+                        <input type="text" id="displayId" disabled class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-100 dark:bg-slate-700 text-gray-500 cursor-not-allowed" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Nazwa</label>
+                        <input type="text" id="nazwa" name="nazwa" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Powierzchnia</label>
+                            <input type="text" id="powierzchnia" name="powierzchnia" required class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none" placeholder="np. 2 000 m²" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Status</label>
+                            <select id="status" name="status" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none">
+                                <option value="dostepna">Dostępna (Zielony)</option>
+                                <option value="rezerwacja">Rezerwacja (Żółty)</option>
+                                <option value="wynajeta">Wynajęta (Czerwony)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1">Opis szczegółowy</label>
+                        <textarea id="opis" name="opis" rows="4" class="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                    </div>
+
+                    <button type="submit" id="submitZoneBtn" disabled class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Wybierz obiekt z listy...
+                    </button>
+                </form>
+            </div>
+
+            <!-- Prawa Kolumna: Lista stref -->
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-slate-700">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Aktualne strefy i hale</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                                <th class="p-4 w-1/4">Obiekt (ID)</th>
+                                <th class="p-4 w-1/4">Powierzchnia</th>
+                                <th class="p-4 w-1/4">Status</th>
+                                <th class="p-4 text-right">Akcja</th>
+                            </tr>
+                        </thead>
+                        <tbody id="zonesTableBody" class="divide-y divide-gray-100 dark:divide-slate-700">
+                            <tr>
+                                <td colspan="4" class="p-8 text-center text-gray-500">Ładowanie stref...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</Layout>
+
+<script is:inline>
+    const form = document.getElementById('editZoneForm');
+    const tableBody = document.getElementById('zonesTableBody');
+    const formSuccess = document.getElementById('formSuccess');
+    const submitBtn = document.getElementById('submitZoneBtn');
+    
+    let allZones = {};
+
+    async function fetchZones() {
+        try {
+            const response = await fetch('/api/get-zones');
+            allZones = await response.json();
+
+            // 1. Sprawdzamy, czy serwer nie zwrócił błędu
+            if (allZones.error) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">Błąd bazy D1: ${allZones.error}</td></tr>`;
+                return;
+            }
+
+            // 2. Sprawdzamy czy mamy dane w obiekcie
+            const keys = Object.keys(allZones);
+            if (keys.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500">Brak stref w bazie danych. Wykonaj migrację SQL.</td></tr>`;
+                return;
+            }
+
+            // 3. Generujemy wiersze tabeli
+            tableBody.innerHTML = keys.map(id => {
+                const zone = allZones[id];
+                if (!zone || typeof zone !== 'object') return '';
+
+                let statusBadge = '<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">Nieokreślony</span>';
+                if (zone.status === 'dostepna') statusBadge = '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Dostępna</span>';
+                if (zone.status === 'rezerwacja') statusBadge = '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">Rezerwacja</span>';
+                if (zone.status === 'wynajeta') statusBadge = '<span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Wynajęta</span>';
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="p-4 align-middle">
+                            <span class="block text-sm font-bold text-slate-900 dark:text-white">${zone.nazwa || 'Brak nazwy'}</span>
+                            <span class="block text-xs text-gray-500">ID: ${zone.id || id}</span>
+                        </td>
+                        <td class="p-4 text-sm text-slate-700 dark:text-gray-300 align-middle">
+                            ${zone.powierzchnia || '-'}
+                        </td>
+                        <td class="p-4 align-middle">
+                            ${statusBadge}
+                        </td>
+                        <td class="p-4 text-right align-middle">
+                            <button onclick="startEdit('${zone.id || id}')" class="inline-flex items-center px-3 py-1.5 bg-sky-50 text-sky-600 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 rounded-lg text-xs font-semibold transition-colors">
+                                Edytuj
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error("Fetch zones error:", error);
+            tableBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">Błąd połączenia z API mapy (/api/get-zones).</td></tr>`;
+        }
+    }
+
+    window.startEdit = function(id) {
+        const zone = allZones[id];
+        if (!zone) return;
+
+        document.getElementById('editId').value = zone.id || id;
+        document.getElementById('displayId').value = zone.id || id;
+        document.getElementById('nazwa').value = zone.nazwa || '';
+        document.getElementById('powierzchnia').value = zone.powierzchnia || '';
+        document.getElementById('status').value = zone.status || 'dostepna';
+        document.getElementById('opis').value = zone.opis || '';
+
+        submitBtn.innerText = "Zapisz zmiany na mapie";
+        submitBtn.disabled = false;
+        
+        form.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        submitBtn.innerText = 'Zapisywanie...';
+        submitBtn.disabled = true;
+        formSuccess.classList.add('hidden');
+
+        try {
+            const formData = new FormData(form);
+            const res = await fetch('/admin/update-zone', { method: 'POST', body: formData });
+            
+            if (!res.ok) {
+                throw new Error("Błąd sieci HTTP " + res.status);
+            }
+
+            formSuccess.classList.remove('hidden');
+            setTimeout(() => formSuccess.classList.add('hidden'), 3000);
+            
+            // Odświeżamy listę stref
+            fetchZones();
+        } catch (error) {
+            console.error("Update error:", error);
+            alert('Błąd podczas zapisywania zmian w bazie D1.');
+        } finally {
+            submitBtn.innerText = 'Zapisz zmiany na mapie';
+            submitBtn.disabled = false;
+        }
+    });
+
+    fetchZones();
+</script>

@@ -1,0 +1,163 @@
+
+
+<div class="w-full max-w-7xl mx-auto py-12 px-4 relative">
+    
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
+        <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
+        
+        <!-- Legenda -->
+        <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
+        </div>
+    </div>
+
+    <!-- Kontener z przewijaniem na telefony -->
+    <div class="w-full overflow-x-auto rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-grab active:cursor-grabbing">
+        <div class="min-w-[1000px] relative" id="map-container">
+            
+            <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
+                
+                <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                
+                <defs>
+                    <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
+                        <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
+                    </pattern>
+                    <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
+                </defs>
+            </svg>
+
+        </div>
+    </div>
+
+    <!-- Dymek (Tooltip) podążający za kursorem -->
+    <div id="map-tooltip" class="fixed hidden pointer-events-none bg-slate-900 text-white p-3 rounded-xl shadow-xl z-50 text-sm transition-opacity duration-150 opacity-0">
+        <div id="tooltip-title" class="font-bold text-base mb-1">Nazwa Hali</div>
+        <div id="tooltip-area" class="text-emerald-400 font-medium">Powierzchnia</div>
+        <div id="tooltip-status" class="text-gray-300 text-xs mt-1 uppercase tracking-wider">Status</div>
+    </div>
+
+    <!-- Modal (Wyskakujące okienko ze szczegółami po kliknięciu) -->
+    <div id="map-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm opacity-0 transition-opacity">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 id="modal-title" class="text-2xl font-bold text-slate-900 dark:text-white">Nazwa Hali</h3>
+                    <span id="modal-status-badge" class="inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide">Status</span>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4 text-slate-600 dark:text-gray-300">
+                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-slate-700">
+                    <span class="font-medium">Powierzchnia:</span>
+                    <span id="modal-area" class="font-bold text-slate-900 dark:text-white">0 m²</span>
+                </div>
+                <div>
+                    <p class="font-medium mb-1">Opis:</p>
+                    <p id="modal-desc" class="text-sm leading-relaxed">Przykładowy opis.</p>
+                </div>
+            </div>
+            
+            <button onclick="closeModal()" class="w-full mt-6 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-3 rounded-xl transition-colors">
+                Zamknij
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script is:inline>
+    const statusColors = {
+        'dostepna': 'rgba(16, 185, 129, 0.65)',
+        'rezerwacja': 'rgba(245, 158, 11, 0.65)',
+        'wynajeta': 'rgba(239, 68, 68, 0.65)'
+    };
+
+    let tooltipTimeout = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const tooltip = document.getElementById('map-tooltip');
+        
+        // POBIERANIE DANYCH Z API D1!
+        try {
+            const response = await fetch('/api/get-zones');
+            window.mapData = await response.json();
+        } catch(e) {
+            console.error("Błąd pobierania danych mapy:", e);
+            return; // Przerywamy jeśli baza nie odpowiada
+        }
+        
+        Object.keys(window.mapData).forEach(id => {
+            const data = window.mapData[id];
+            const svgElement = document.getElementById(id);
+            
+            if (svgElement) {
+                // Konfiguracja bazowa
+                svgElement.style.fill = statusColors[data.status];
+                svgElement.style.cursor = 'pointer';
+                svgElement.style.pointerEvents = 'all';
+                svgElement.style.stroke = '#ffffff';
+                svgElement.style.strokeWidth = '3px';
+                svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
+
+                // Najechanie (Hover)
+                svgElement.addEventListener('mouseenter', () => {
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+
+                    if (svgElement.parentElement) {
+                        svgElement.parentElement.appendChild(svgElement);
+                    }
+
+                    svgElement.style.fill = statusColors[data.status].replace('0.65', '0.9');
+                    
+                    document.getElementById('tooltip-title').innerText = data.nazwa;
+                    document.getElementById('tooltip-area').innerText = data.powierzchnia;
+                    document.getElementById('tooltip-status').innerText = data.status;
+                    
+                    tooltip.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        tooltip.classList.remove('opacity-0');
+                    });
+                });
+
+                // Ruch myszy
+                svgElement.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                });
+
+                // Zjazd myszy
+                svgElement.addEventListener('mouseleave', () => {
+                    svgElement.style.fill = statusColors[data.status];
+                    
+                    tooltip.classList.add('opacity-0');
+                    tooltipTimeout = setTimeout(() => {
+                        tooltip.classList.add('hidden');
+                    }, 150);
+                });
+
+                // Kliknięcie
+                svgElement.addEventListener('click', () => {
+                    openModal(data);
+                });
+            }
+        });
+    });
+
+    // --- FUNKCJE MODALA BEZ ZMIAN --- (zostaw openModal i closeModal tak jak miałeś)
+    function openModal(data) { /*...*/}
+    window.closeModal = function() { /*...*/}
+</script>
