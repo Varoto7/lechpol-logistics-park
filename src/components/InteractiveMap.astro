@@ -24,7 +24,6 @@ import mapData from '../data/mapData.json';
             <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
                 
-                <!-- Dodałem id dla każdej hali -->
                 <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
                 <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
                 <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
@@ -42,7 +41,7 @@ import mapData from '../data/mapData.json';
     </div>
 
     <!-- Dymek (Tooltip) podążający za kursorem -->
-    <div id="map-tooltip" class="fixed hidden pointer-events-none bg-slate-900 text-white p-3 rounded-xl shadow-xl z-50 text-sm transition-opacity duration-200 opacity-0">
+    <div id="map-tooltip" class="fixed hidden pointer-events-none bg-slate-900 text-white p-3 rounded-xl shadow-xl z-50 text-sm transition-opacity duration-150 opacity-0">
         <div id="tooltip-title" class="font-bold text-base mb-1">Nazwa Hali</div>
         <div id="tooltip-area" class="text-emerald-400 font-medium">Powierzchnia</div>
         <div id="tooltip-status" class="text-gray-300 text-xs mt-1 uppercase tracking-wider">Status</div>
@@ -87,10 +86,12 @@ import mapData from '../data/mapData.json';
 
 <script is:inline>
     const statusColors = {
-        'dostepna': 'rgba(16, 185, 129, 0.65)',  // Zielony
-        'rezerwacja': 'rgba(245, 158, 11, 0.65)', // Żółty
-        'wynajeta': 'rgba(239, 68, 68, 0.65)'     // Czerwony
+        'dostepna': 'rgba(16, 185, 129, 0.65)',
+        'rezerwacja': 'rgba(245, 158, 11, 0.65)',
+        'wynajeta': 'rgba(239, 68, 68, 0.65)'
     };
+
+    let tooltipTimeout = null;
 
     document.addEventListener('DOMContentLoaded', () => {
         const tooltip = document.getElementById('map-tooltip');
@@ -100,16 +101,27 @@ import mapData from '../data/mapData.json';
             const svgElement = document.getElementById(id);
             
             if (svgElement) {
-                // Włączamy wypełnienie oraz interakcje
+                // Konfiguracja bazowa
                 svgElement.style.fill = statusColors[data.status];
                 svgElement.style.cursor = 'pointer';
                 svgElement.style.pointerEvents = 'all';
                 svgElement.style.stroke = '#ffffff';
                 svgElement.style.strokeWidth = '3px';
-                svgElement.style.transition = 'all 0.2s ease-in-out';
+                svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
 
                 // Najechanie (Hover)
                 svgElement.addEventListener('mouseenter', () => {
+                    // Czysta obsługa timera - anuluj zniknięcie dymka
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+
+                    // Przesuń aktywny element na wierzch struktury SVG
+                    if (svgElement.parentElement) {
+                        svgElement.parentElement.appendChild(svgElement);
+                    }
+
                     svgElement.style.fill = statusColors[data.status].replace('0.65', '0.9');
                     
                     document.getElementById('tooltip-title').innerText = data.nazwa;
@@ -117,7 +129,9 @@ import mapData from '../data/mapData.json';
                     document.getElementById('tooltip-status').innerText = data.status;
                     
                     tooltip.classList.remove('hidden');
-                    setTimeout(() => tooltip.classList.remove('opacity-0'), 10);
+                    requestAnimationFrame(() => {
+                        tooltip.classList.remove('opacity-0');
+                    });
                 });
 
                 // Ruch myszy
@@ -129,8 +143,11 @@ import mapData from '../data/mapData.json';
                 // Zjazd myszy
                 svgElement.addEventListener('mouseleave', () => {
                     svgElement.style.fill = statusColors[data.status];
+                    
                     tooltip.classList.add('opacity-0');
-                    setTimeout(() => tooltip.classList.add('hidden'), 200);
+                    tooltipTimeout = setTimeout(() => {
+                        tooltip.classList.add('hidden');
+                    }, 150);
                 });
 
                 // Kliknięcie
