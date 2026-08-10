@@ -1,7 +1,4 @@
----
-// Importujemy nasze dane
-import mapData from '../data/mapData.json';
----
+
 
 <div class="w-full max-w-7xl mx-auto py-12 px-4 relative">
     
@@ -79,11 +76,6 @@ import mapData from '../data/mapData.json';
 
 </div>
 
-<!-- Przekazujemy dane z JSONa do przeglądarki -->
-<script define:vars={{ mapData }}>
-    window.mapData = mapData;
-</script>
-
 <script is:inline>
     const statusColors = {
         'dostepna': 'rgba(16, 185, 129, 0.65)',
@@ -93,8 +85,17 @@ import mapData from '../data/mapData.json';
 
     let tooltipTimeout = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         const tooltip = document.getElementById('map-tooltip');
+        
+        // POBIERANIE DANYCH Z API D1!
+        try {
+            const response = await fetch('/api/get-zones');
+            window.mapData = await response.json();
+        } catch(e) {
+            console.error("Błąd pobierania danych mapy:", e);
+            return; // Przerywamy jeśli baza nie odpowiada
+        }
         
         Object.keys(window.mapData).forEach(id => {
             const data = window.mapData[id];
@@ -111,13 +112,11 @@ import mapData from '../data/mapData.json';
 
                 // Najechanie (Hover)
                 svgElement.addEventListener('mouseenter', () => {
-                    // Czysta obsługa timera - anuluj zniknięcie dymka
                     if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                         tooltipTimeout = null;
                     }
 
-                    // Przesuń aktywny element na wierzch struktury SVG
                     if (svgElement.parentElement) {
                         svgElement.parentElement.appendChild(svgElement);
                     }
@@ -158,39 +157,7 @@ import mapData from '../data/mapData.json';
         });
     });
 
-    function openModal(data) {
-        const modal = document.getElementById('map-modal');
-        const content = document.getElementById('modal-content');
-        const badge = document.getElementById('modal-status-badge');
-
-        document.getElementById('modal-title').innerText = data.nazwa;
-        document.getElementById('modal-area').innerText = data.powierzchnia;
-        document.getElementById('modal-desc').innerText = data.opis;
-        badge.innerText = data.status;
-
-        badge.className = 'inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ';
-        if (data.status === 'dostepna') badge.classList.add('bg-emerald-100', 'text-emerald-700');
-        if (data.status === 'rezerwacja') badge.classList.add('bg-amber-100', 'text-amber-700');
-        if (data.status === 'wynajeta') badge.classList.add('bg-red-100', 'text-red-700');
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            content.classList.remove('scale-95');
-        }, 10);
-    }
-
-    window.closeModal = function() {
-        const modal = document.getElementById('map-modal');
-        const content = document.getElementById('modal-content');
-        
-        modal.classList.add('opacity-0');
-        content.classList.add('scale-95');
-        
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }, 300);
-    }
+    // --- FUNKCJE MODALA BEZ ZMIAN --- (zostaw openModal i closeModal tak jak miałeś)
+    function openModal(data) { /*...*/}
+    window.closeModal = function() { /*...*/}
 </script>
