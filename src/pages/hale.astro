@@ -1,16 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-
-const hale = [
-    {
-        title: "Hala Magazynowa – Miętne",
-        image: "/hale/hala1.jpg",
-        area: "ok. 10 000 m²",
-        height: "10 m",
-        docks: "Doki + rampy '0'",
-        description: "Nowoczesny obiekt magazynowo-logistyczny położony bezpośrednio przy trasie S17 (węzeł Garwolin Zachód). Wyposażony w posadzkę bezpyłową o wysokiej nośności, ogrzewanie gazowe, instalację tryskaczową oraz plac manewrowy dla TIR."
-    }
-];
 ---
 
 <Layout title="Hale Magazynowe | Lechpol Logistics Park">
@@ -20,28 +9,52 @@ const hale = [
             <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Poznaj nasze obiekty logistyczne zlokalizowane w Miętnem przy trasie S17.</p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {hale.map((hala) => (
+        <div id="halls-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Tutaj JavaScript wstrzyknie hale -->
+            <div class="col-span-full text-center text-gray-500 py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mb-4"></div>
+                <p>Ładowanie dostępnych obiektów...</p>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script is:inline>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const grid = document.getElementById('halls-grid');
+        
+        try {
+            const res = await fetch('/api/get-halls');
+            const halls = await res.json();
+
+            if (halls.error) throw new Error(halls.error);
+            
+            if (halls.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-12">Obecnie nie posiadamy hal wprowadzonych do systemu.</div>';
+                return;
+            }
+
+            grid.innerHTML = halls.map(hala => `
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col group">
                     <div class="h-64 overflow-hidden relative">
-                        <img src={hala.image} alt={hala.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src="${hala.image}" alt="${hala.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='/logo.png'" />
                     </div>
                     <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3">{hala.title}</h2>
-                        <p class="text-gray-600 dark:text-gray-300 mb-6 flex-grow leading-relaxed">{hala.description}</p>
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-3">${hala.title}</h2>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6 flex-grow leading-relaxed whitespace-pre-line">${hala.description}</p>
                         
                         <div class="grid grid-cols-3 gap-4 border-t border-gray-100 dark:border-slate-700 pt-6 mt-auto">
                             <div class="text-center">
                                 <span class="block text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Powierzchnia</span>
-                                <span class="font-bold text-slate-900 dark:text-white">{hala.area}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">${hala.area}</span>
                             </div>
                             <div class="text-center border-l border-gray-100 dark:border-slate-700">
                                 <span class="block text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Wysokość</span>
-                                <span class="font-bold text-slate-900 dark:text-white">{hala.height}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">${hala.height}</span>
                             </div>
                             <div class="text-center border-l border-gray-100 dark:border-slate-700">
                                 <span class="block text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Doki</span>
-                                <span class="font-bold text-slate-900 dark:text-white">{hala.docks}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">${hala.docks}</span>
                             </div>
                         </div>
 
@@ -50,7 +63,10 @@ const hale = [
                         </a>
                     </div>
                 </div>
-            ))}
-        </div>
-    </main>
-</Layout>
+            `).join('');
+
+        } catch (err) {
+            grid.innerHTML = '<div class="col-span-full text-center text-red-500 py-12">Nie udało się załadować obiektów z bazy danych.</div>';
+        }
+    });
+</script>
