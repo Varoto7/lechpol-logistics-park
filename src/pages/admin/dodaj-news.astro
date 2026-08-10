@@ -5,12 +5,15 @@ import Layout from '../../layouts/Layout.astro';
 <Layout title="Panel Admina | Aktualności">
     <main class="max-w-7xl mx-auto px-4 py-16 min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         
-        <div class="flex justify-between items-center mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Zarządzanie Aktualnościami</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Dodawaj, edytuj i usuwaj wpisy (Pełny CRUD)</p>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Dodaj Aktualność</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Opublikuj nowy wpis na stronie parku logistycznego</p>
             </div>
-            <a href="/admin/wiadomosci" class="text-sky-500 hover:text-sky-600 font-medium transition-colors">Przejdź do wiadomości →</a>
+            <a href="/admin" class="inline-flex items-center text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 font-medium transition-colors">
+                <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Powrót do menu głównego
+            </a>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
