@@ -21,22 +21,23 @@ import mapData from '../data/mapData.json';
     <div class="w-full overflow-x-auto rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-grab active:cursor-grabbing">
         <div class="min-w-[1000px] relative" id="map-container">
             
-            <!-- ⬇️ TUTAJ WKLEISZ SWÓJ KOD SVG Z FIGMY ⬇️ -->
             <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
-<path d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
-<path d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
-<path d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
-<path d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
-<defs>
-<pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
-<use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
-</pattern>
-<image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" /></defs>
-</svg>
+                <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
+                
+                <!-- Dodałem id dla każdej hali -->
+                <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                
+                <defs>
+                    <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
+                        <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
+                    </pattern>
+                    <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
+                </defs>
+            </svg>
 
-            <!-- ⬆️ TUTAJ WKLEISZ SWÓJ KOD SVG Z FIGMY ⬆️ -->
-            
         </div>
     </div>
 
@@ -79,41 +80,37 @@ import mapData from '../data/mapData.json';
 
 </div>
 
-<!-- Przekazujemy dane z JSONa do przeglądarki (do zmiennej window.mapData) -->
+<!-- Przekazujemy dane z JSONa do przeglądarki -->
 <script define:vars={{ mapData }}>
     window.mapData = mapData;
 </script>
 
 <script is:inline>
-    // Konfiguracja kolorów dla statusów (rgba z 60% przezroczystości)
     const statusColors = {
-        'dostepna': 'rgba(16, 185, 129, 0.6)',  // Emerald/Zielony
-        'rezerwacja': 'rgba(245, 158, 11, 0.6)', // Amber/Żółty
-        'wynajeta': 'rgba(239, 68, 68, 0.6)'     // Czerwony
+        'dostepna': 'rgba(16, 185, 129, 0.65)',  // Zielony
+        'rezerwacja': 'rgba(245, 158, 11, 0.65)', // Żółty
+        'wynajeta': 'rgba(239, 68, 68, 0.65)'     // Czerwony
     };
 
-    // Nasłuchujemy załadowania dokumentu
     document.addEventListener('DOMContentLoaded', () => {
         const tooltip = document.getElementById('map-tooltip');
         
-        // Przechodzimy po wszystkich ID z naszego pliku JSON (hala-1, hala-2...)
         Object.keys(window.mapData).forEach(id => {
             const data = window.mapData[id];
-            const svgElement = document.getElementById(id); // Szuka elementu SVG o danym id
+            const svgElement = document.getElementById(id);
             
             if (svgElement) {
-                // 1. Ustawiamy kolor na podstawie statusu
+                // Włączamy wypełnienie oraz interakcje
                 svgElement.style.fill = statusColors[data.status];
-                
-                // 2. Dodajemy style interaktywne
                 svgElement.style.cursor = 'pointer';
-                svgElement.style.transition = 'all 0.3s ease';
-                svgElement.style.stroke = '#ffffff'; // Biała ramka
-                svgElement.style.strokeWidth = '2px';
+                svgElement.style.pointerEvents = 'all';
+                svgElement.style.stroke = '#ffffff';
+                svgElement.style.strokeWidth = '3px';
+                svgElement.style.transition = 'all 0.2s ease-in-out';
 
-                // 3. Obsługa najechania (Hover)
-                svgElement.addEventListener('mouseenter', (e) => {
-                    svgElement.style.fill = svgElement.style.fill.replace('0.6', '0.9'); // Zwiększa widoczność koloru
+                // Najechanie (Hover)
+                svgElement.addEventListener('mouseenter', () => {
+                    svgElement.style.fill = statusColors[data.status].replace('0.65', '0.9');
                     
                     document.getElementById('tooltip-title').innerText = data.nazwa;
                     document.getElementById('tooltip-area').innerText = data.powierzchnia;
@@ -123,21 +120,20 @@ import mapData from '../data/mapData.json';
                     setTimeout(() => tooltip.classList.remove('opacity-0'), 10);
                 });
 
-                // 4. Ruszanie dymkiem za kursorem
+                // Ruch myszy
                 svgElement.addEventListener('mousemove', (e) => {
-                    // Pozycjonujemy tooltip obok kursora (+15px żeby go nie zasłaniał)
                     tooltip.style.left = (e.clientX + 15) + 'px';
                     tooltip.style.top = (e.clientY + 15) + 'px';
                 });
 
-                // 5. Zjazd z elementu
+                // Zjazd myszy
                 svgElement.addEventListener('mouseleave', () => {
-                    svgElement.style.fill = statusColors[data.status]; // Powrót do starego koloru
+                    svgElement.style.fill = statusColors[data.status];
                     tooltip.classList.add('opacity-0');
                     setTimeout(() => tooltip.classList.add('hidden'), 200);
                 });
 
-                // 6. Kliknięcie = Otwarcie modala
+                // Kliknięcie
                 svgElement.addEventListener('click', () => {
                     openModal(data);
                 });
@@ -145,7 +141,6 @@ import mapData from '../data/mapData.json';
         });
     });
 
-    // Funkcje do obsługi modala
     function openModal(data) {
         const modal = document.getElementById('map-modal');
         const content = document.getElementById('modal-content');
@@ -156,7 +151,6 @@ import mapData from '../data/mapData.json';
         document.getElementById('modal-desc').innerText = data.opis;
         badge.innerText = data.status;
 
-        // Kolorowanie badge'a (odznaki)
         badge.className = 'inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ';
         if (data.status === 'dostepna') badge.classList.add('bg-emerald-100', 'text-emerald-700');
         if (data.status === 'rezerwacja') badge.classList.add('bg-amber-100', 'text-amber-700');
@@ -164,7 +158,6 @@ import mapData from '../data/mapData.json';
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        // Małe opóźnienie dla animacji wjazdu
         setTimeout(() => {
             modal.classList.remove('opacity-0');
             content.classList.remove('scale-95');
