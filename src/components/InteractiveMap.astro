@@ -99,43 +99,49 @@
         try {
             const response = await fetch('/api/get-zones');
             window.mapData = await response.json();
+
+            // Jeśli API zwróciło błąd lub baza jest pusta, wypisz błąd w konsoli (F12)
+            if (!window.mapData || window.mapData.error) {
+                console.error("Błąd API Mapy:", window.mapData?.error || "Brak danych");
+                return;
+            }
         } catch(e) {
-            console.error("Błąd pobierania danych mapy z bazy D1:", e);
+            console.error("Błąd połączenia z /api/get-zones:", e);
             return; 
         }
         
         Object.keys(window.mapData).forEach(id => {
             const data = window.mapData[id];
-            
-            // Rozwiązanie problemu z nazwami: łapie ID z bazy (np. "hala1") i dopasowuje do "hala-1" z SVG
+            if (!data || typeof data !== 'object') return;
+
+            // Szukamy ID w formacie 'hala1' lub 'hala-1'
             let svgElement = document.getElementById(id) || document.getElementById(id.replace('hala', 'hala-'));
             
             if (svgElement) {
-                // Konfiguracja bazowa SVG
-                svgElement.style.fill = statusColors[data.status] || 'rgba(156, 163, 175, 0.65)';
+                const currentStatus = data.status || 'dostepna';
+
+                svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
                 svgElement.style.cursor = 'pointer';
                 svgElement.style.pointerEvents = 'all';
                 svgElement.style.stroke = '#ffffff';
                 svgElement.style.strokeWidth = '3px';
                 svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
 
-                // Najechanie (Hover)
                 svgElement.addEventListener('mouseenter', () => {
                     if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                         tooltipTimeout = null;
                     }
 
-                    // Przenosi element na wierzch, aby obrys nie był przycięty przez sąsiadów
                     if (svgElement.parentElement) {
                         svgElement.parentElement.appendChild(svgElement);
                     }
 
-                    svgElement.style.fill = (statusColors[data.status] || 'rgba(156, 163, 175, 0.65)').replace('0.65', '0.9');
+                    svgElement.style.fill = (statusColors[currentStatus] || statusColors['dostepna']).replace('0.65', '0.9');
                     
-                    document.getElementById('tooltip-title').innerText = data.nazwa || 'Nieznana nazwa';
+                    document.getElementById('tooltip-title').innerText = data.nazwa || 'Strefa';
                     document.getElementById('tooltip-area').innerText = data.powierzchnia || '-';
-                    document.getElementById('tooltip-status').innerText = data.status || 'Brak danych';
+                    document.getElementById('tooltip-status').innerText = currentStatus;
                     
                     tooltip.classList.remove('hidden');
                     requestAnimationFrame(() => {
@@ -143,15 +149,13 @@
                     });
                 });
 
-                // Ruch myszy
                 svgElement.addEventListener('mousemove', (e) => {
                     tooltip.style.left = (e.clientX + 15) + 'px';
                     tooltip.style.top = (e.clientY + 15) + 'px';
                 });
 
-                // Zjazd myszy
                 svgElement.addEventListener('mouseleave', () => {
-                    svgElement.style.fill = statusColors[data.status] || 'rgba(156, 163, 175, 0.65)';
+                    svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
                     
                     tooltip.classList.add('opacity-0');
                     tooltipTimeout = setTimeout(() => {
@@ -159,7 +163,6 @@
                     }, 150);
                 });
 
-                // Kliknięcie - Otwarcie modala
                 svgElement.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openModal(data);
@@ -168,24 +171,22 @@
         });
     });
 
-    // Wypełnianie i otwieranie Modala
     function openModal(data) {
         const modal = document.getElementById('map-modal');
         const modalContent = document.getElementById('modal-content');
         
-        document.getElementById('modal-title').innerText = data.nazwa || 'Nieznana strefa';
-        document.getElementById('modal-area').innerText = data.powierzchnia || 'Brak danych';
-        document.getElementById('modal-desc').innerText = data.opis || 'Brak dodatkowego opisu dla tego obiektu.';
+        document.getElementById('modal-title').innerText = data.nazwa || 'Strefa';
+        document.getElementById('modal-area').innerText = data.powierzchnia || '-';
+        document.getElementById('modal-desc').innerText = data.opis || 'Brak opisu.';
         
         const badge = document.getElementById('modal-status-badge');
-        badge.innerText = data.status;
-        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${statusBadges[data.status] || 'bg-gray-100 text-gray-700'}`;
+        const currentStatus = data.status || 'dostepna';
+        badge.innerText = currentStatus;
+        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${statusBadges[currentStatus] || 'bg-gray-100 text-gray-700'}`;
         
-        // Pokaż okno
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         
-        // Animacja
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             modalContent.classList.remove('scale-95');
@@ -193,7 +194,6 @@
         });
     }
 
-    // Zamykanie Modala
     window.closeModal = function() {
         const modal = document.getElementById('map-modal');
         const modalContent = document.getElementById('modal-content');
@@ -208,7 +208,6 @@
         }, 300);
     }
 
-    // Zamykanie modala po kliknięciu w szare tło poza oknem
     document.getElementById('map-modal').addEventListener('click', (e) => {
         if(e.target === document.getElementById('map-modal')) {
             closeModal();
