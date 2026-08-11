@@ -12,27 +12,29 @@
         </div>
     </div>
 
-    <!-- Kontener z przewijaniem na telefony -->
-    <div class="w-full overflow-x-auto rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-grab active:cursor-grabbing">
-        <div class="min-w-[1000px] relative" id="map-container">
-            
-            <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
+    <!-- Główny Kontener Mapy z przewijaniem -->
+    <div class="relative w-full rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 overflow-hidden">
+        <div id="map-scroll-container" class="w-full overflow-auto max-h-[75vh] cursor-grab active:cursor-grabbing select-none p-2">
+            <div id="map-inner-wrapper" class="min-w-[1000px] w-full relative">
                 
-                <!-- Ścieżki stref (ID muszą zgadzać się z bazą, ewentualnie z myślnikiem) -->
-                <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                
-                <defs>
-                    <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
-                        <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
-                    </pattern>
-                    <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
-                </defs>
-            </svg>
+                <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="map-svg-element">
+                    <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
+                    
+                    <!-- Ścieżki stref -->
+                    <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                    
+                    <defs>
+                        <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
+                            <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
+                        </pattern>
+                        <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
+                    </defs>
+                </svg>
 
+            </div>
         </div>
     </div>
 
@@ -43,7 +45,7 @@
         <div id="tooltip-status" class="text-gray-300 text-xs mt-1 uppercase tracking-wider">Status</div>
     </div>
 
-    <!-- Modal (Wyskakujące okienko ze szczegółami po kliknięciu) -->
+    <!-- Modal ze szczegółami po kliknięciu -->
     <div id="map-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-start mb-4">
@@ -79,34 +81,34 @@
 </div>
 
 <script is:inline>
-    const statusColors = {
-        'dostepna': 'rgba(16, 185, 129, 0.65)',
-        'rezerwacja': 'rgba(245, 158, 11, 0.65)',
-        'wynajeta': 'rgba(239, 68, 68, 0.65)'
-    };
-
-    const statusBadges = {
-        'dostepna': 'bg-emerald-100 text-emerald-700',
-        'rezerwacja': 'bg-amber-100 text-amber-700',
-        'wynajeta': 'bg-red-100 text-red-700'
+    const statusConfig = {
+        'dostepna': { color: '#10b981', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-emerald-100 text-emerald-700' },
+        'rezerwacja': { color: '#f59e0b', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-amber-100 text-amber-700' },
+        'wynajeta': { color: '#ef4444', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-red-100 text-red-700' }
     };
 
     let tooltipTimeout = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
         const tooltip = document.getElementById('map-tooltip');
+        const scrollContainer = document.getElementById('map-scroll-container');
         
+        // --- Ustawienie widoku lekko niżej środka zdjęcia ---
+        setTimeout(() => {
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = (scrollContainer.scrollWidth - scrollContainer.clientWidth) / 2;
+                scrollContainer.scrollTop = (scrollContainer.scrollHeight - scrollContainer.clientHeight) * 0.58;
+            }
+        }, 50);
+
+        // --- POBIERANIE DANYCH Z BAZY D1 ---
         try {
             const response = await fetch('/api/get-zones');
             window.mapData = await response.json();
 
-            // Jeśli API zwróciło błąd lub baza jest pusta, wypisz błąd w konsoli (F12)
-            if (!window.mapData || window.mapData.error) {
-                console.error("Błąd API Mapy:", window.mapData?.error || "Brak danych");
-                return;
-            }
+            if (!window.mapData || window.mapData.error) return;
         } catch(e) {
-            console.error("Błąd połączenia z /api/get-zones:", e);
+            console.error("Błąd połączenia z mapą:", e);
             return; 
         }
         
@@ -114,30 +116,33 @@
             const data = window.mapData[id];
             if (!data || typeof data !== 'object') return;
 
-            // Szukamy ID w formacie 'hala1' lub 'hala-1'
             let svgElement = document.getElementById(id) || document.getElementById(id.replace('hala', 'hala-'));
             
             if (svgElement) {
                 const currentStatus = data.status || 'dostepna';
+                const config = statusConfig[currentStatus] || statusConfig['dostepna'];
 
-                svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
+                svgElement.setAttribute('fill', config.color);
+                svgElement.setAttribute('fill-opacity', config.opacity);
+                
                 svgElement.style.cursor = 'pointer';
-                svgElement.style.pointerEvents = 'all';
+                svgElement.style.pointerEvents = 'visiblePainted';
                 svgElement.style.stroke = '#ffffff';
                 svgElement.style.strokeWidth = '3px';
-                svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
+                svgElement.style.transition = 'fill-opacity 0.15s ease-in-out';
 
+                // Hover
                 svgElement.addEventListener('mouseenter', () => {
                     if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                         tooltipTimeout = null;
                     }
 
-                    if (svgElement.parentElement) {
+                    if (svgElement.nextElementSibling) {
                         svgElement.parentElement.appendChild(svgElement);
                     }
 
-                    svgElement.style.fill = (statusColors[currentStatus] || statusColors['dostepna']).replace('0.65', '0.9');
+                    svgElement.setAttribute('fill-opacity', config.hoverOpacity);
                     
                     document.getElementById('tooltip-title').innerText = data.nazwa || 'Strefa';
                     document.getElementById('tooltip-area').innerText = data.powierzchnia || '-';
@@ -149,13 +154,15 @@
                     });
                 });
 
+                // Ruch myszy
                 svgElement.addEventListener('mousemove', (e) => {
                     tooltip.style.left = (e.clientX + 15) + 'px';
                     tooltip.style.top = (e.clientY + 15) + 'px';
                 });
 
+                // Zjazd myszy
                 svgElement.addEventListener('mouseleave', () => {
-                    svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
+                    svgElement.setAttribute('fill-opacity', config.opacity);
                     
                     tooltip.classList.add('opacity-0');
                     tooltipTimeout = setTimeout(() => {
@@ -163,6 +170,7 @@
                     }, 150);
                 });
 
+                // Kliknięcie
                 svgElement.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openModal(data);
@@ -181,8 +189,10 @@
         
         const badge = document.getElementById('modal-status-badge');
         const currentStatus = data.status || 'dostepna';
+        const config = statusConfig[currentStatus] || statusConfig['dostepna'];
+
         badge.innerText = currentStatus;
-        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${statusBadges[currentStatus] || 'bg-gray-100 text-gray-700'}`;
+        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${config.badgeClass}`;
         
         modal.classList.remove('hidden');
         modal.classList.add('flex');
