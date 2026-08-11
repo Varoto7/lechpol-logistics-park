@@ -1,40 +1,21 @@
 <div class="w-full max-w-7xl mx-auto py-12 px-4 relative">
     
-    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-            <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
-            <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
-            
-            <!-- Legenda -->
-            <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
-                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
-                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
-                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
-            </div>
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
+        <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
+        
+        <!-- Legenda -->
+        <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
+            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
         </div>
     </div>
 
-    <!-- Główny Kontener Mapy z kontrolkami powiększenia -->
+    <!-- Główny Kontener Mapy z przewijaniem -->
     <div class="relative w-full rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 overflow-hidden">
-        
-        <!-- Przyciski Powiększania / Pomniejszania na mapie -->
-        <div class="absolute top-4 right-4 z-20 flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-1.5 rounded-xl border border-gray-200 dark:border-slate-700 shadow-md">
-            <button id="zoom-in-btn" title="Powiększ mapę" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg transition-colors active:scale-95">
-                +
-            </button>
-            <button id="zoom-out-btn" title="Pomniejsz mapę" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg transition-colors active:scale-95">
-                −
-            </button>
-            <div class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></div>
-            <button id="zoom-reset-btn" title="Wycentruj i odzoomuj" class="px-2.5 h-9 flex items-center justify-center text-xs font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-700 dark:text-gray-300 transition-colors active:scale-95">
-                Reset
-            </button>
-        </div>
-
-        <!-- Przewijany obszar roboczy -->
         <div id="map-scroll-container" class="w-full overflow-auto max-h-[75vh] cursor-grab active:cursor-grabbing select-none p-2">
-            <!-- Akceleracja sprzętowa GPU dodana w klasach CSS: gpu-layer -->
-            <div id="map-inner-wrapper" class="w-full origin-top-left relative gpu-layer">
+            <div id="map-inner-wrapper" class="min-w-[1000px] w-full relative">
                 
                 <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="map-svg-element">
                     <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
@@ -99,17 +80,6 @@
 
 </div>
 
-<!-- Wymuszenie sprzętowej akceleracji GPU -->
-<style>
-    .gpu-layer {
-        will-change: transform;
-        transform-style: preserve-3d;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-</style>
-
 <script is:inline>
     const statusConfig = {
         'dostepna': { color: '#10b981', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-emerald-100 text-emerald-700' },
@@ -118,33 +88,18 @@
     };
 
     let tooltipTimeout = null;
-    let currentZoom = 1;
 
     document.addEventListener('DOMContentLoaded', async () => {
         const tooltip = document.getElementById('map-tooltip');
         const scrollContainer = document.getElementById('map-scroll-container');
-        const innerWrapper = document.getElementById('map-inner-wrapper');
         
-        // --- WYŁĄCZNIE TRANSFORMCJE GPU (ZERO LAYOUT REFLOW) ---
-        function updateZoom(newZoom) {
-            currentZoom = Math.min(Math.max(newZoom, 1), 2.5);
-            // Używamy scale3d / translateZ(0) dla wymuszenia akceleracji sprzętowej na Androidzie
-            innerWrapper.style.transform = `scale3d(${currentZoom}, ${currentZoom}, 1) translateZ(0)`;
-        }
-
-        function centerMap() {
-            updateZoom(1);
-            setTimeout(() => {
+        // --- Ustawienie widoku lekko niżej środka zdjęcia ---
+        setTimeout(() => {
+            if (scrollContainer) {
                 scrollContainer.scrollLeft = (scrollContainer.scrollWidth - scrollContainer.clientWidth) / 2;
-                scrollContainer.scrollTop = (scrollContainer.scrollHeight - scrollContainer.clientHeight) / 2;
-            }, 50);
-        }
-
-        document.getElementById('zoom-in-btn').addEventListener('click', () => updateZoom(currentZoom + 0.35));
-        document.getElementById('zoom-out-btn').addEventListener('click', () => updateZoom(currentZoom - 0.35));
-        document.getElementById('zoom-reset-btn').addEventListener('click', centerMap);
-
-        centerMap();
+                scrollContainer.scrollTop = (scrollContainer.scrollHeight - scrollContainer.clientHeight) * 0.58;
+            }
+        }, 50);
 
         // --- POBIERANIE DANYCH Z BAZY D1 ---
         try {
