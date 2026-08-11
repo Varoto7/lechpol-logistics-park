@@ -1,38 +1,58 @@
 <div class="w-full max-w-7xl mx-auto py-12 px-4 relative">
     
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
-        <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
-        
-        <!-- Legenda -->
-        <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
+            <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
+            
+            <!-- Legenda -->
+            <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
+                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
+                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
+                <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
+            </div>
         </div>
     </div>
 
-    <!-- Kontener z przewijaniem na telefony -->
-    <div class="w-full overflow-x-auto rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-grab active:cursor-grabbing">
-        <div class="min-w-[1000px] relative" id="map-container">
-            
-            <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
-                
-                <!-- Ścieżki stref -->
-                <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                
-                <defs>
-                    <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
-                        <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
-                    </pattern>
-                    <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
-                </defs>
-            </svg>
+    <!-- Główny Kontener Mapy z kontrolkami powiększenia -->
+    <div class="relative w-full rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 overflow-hidden">
+        
+        <!-- Przyciski Powiększania / Pomniejszania na mapie -->
+        <div class="absolute top-4 right-4 z-20 flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-1.5 rounded-xl border border-gray-200 dark:border-slate-700 shadow-md">
+            <button id="zoom-in-btn" title="Powiększ mapę" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg transition-colors">
+                +
+            </button>
+            <button id="zoom-out-btn" title="Pomniejsz mapę" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg transition-colors">
+                −
+            </button>
+            <div class="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1"></div>
+            <button id="zoom-reset-btn" title="Wycentruj i odzoomuj" class="px-2.5 h-9 flex items-center justify-center text-xs font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-700 dark:text-gray-300 transition-colors">
+                Reset
+            </button>
+        </div>
 
+        <!-- Przewijany obszar roboczy -->
+        <div id="map-scroll-container" class="w-full overflow-auto max-h-[75vh] cursor-grab active:cursor-grabbing select-none p-2">
+            <div id="map-inner-wrapper" class="w-full transition-transform duration-200 origin-center relative">
+                
+                <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="map-svg-element">
+                    <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
+                    
+                    <!-- Ścieżki stref -->
+                    <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                    <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
+                    
+                    <defs>
+                        <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
+                            <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
+                        </pattern>
+                        <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
+                    </defs>
+                </svg>
+
+            </div>
         </div>
     </div>
 
@@ -79,7 +99,6 @@
 </div>
 
 <script is:inline>
-    // Pełna kompatybilność ze standardem SVG 1.1 dla MS Edge & Safari
     const statusConfig = {
         'dostepna': { color: '#10b981', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-emerald-100 text-emerald-700' },
         'rezerwacja': { color: '#f59e0b', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-amber-100 text-amber-700' },
@@ -87,10 +106,42 @@
     };
 
     let tooltipTimeout = null;
+    let currentZoom = 1;
 
     document.addEventListener('DOMContentLoaded', async () => {
         const tooltip = document.getElementById('map-tooltip');
+        const scrollContainer = document.getElementById('map-scroll-container');
+        const innerWrapper = document.getElementById('map-inner-wrapper');
         
+        // --- OBSŁUGA POWIĘKSZANIA (ZOOM) ---
+        function updateZoom(newZoom) {
+            currentZoom = Math.min(Math.max(newZoom, 1), 2.5); // Ograniczenie powiększenia od 1x do 2.5x
+            innerWrapper.style.transform = `scale(${currentZoom})`;
+            
+            if (currentZoom === 1) {
+                innerWrapper.style.width = '100%';
+            } else {
+                innerWrapper.style.width = `${currentZoom * 100}%`;
+            }
+        }
+
+        // Automatyczne wycentrowanie po załadowaniu
+        function centerMap() {
+            updateZoom(1);
+            setTimeout(() => {
+                scrollContainer.scrollLeft = (scrollContainer.scrollWidth - scrollContainer.clientWidth) / 2;
+                scrollContainer.scrollTop = (scrollContainer.scrollHeight - scrollContainer.clientHeight) / 2;
+            }, 50);
+        }
+
+        document.getElementById('zoom-in-btn').addEventListener('click', () => updateZoom(currentZoom + 0.3));
+        document.getElementById('zoom-out-btn').addEventListener('click', () => updateZoom(currentZoom - 0.3));
+        document.getElementById('zoom-reset-btn').addEventListener('click', centerMap);
+
+        // Zadzwoń po wycentrowanie na start
+        centerMap();
+
+        // --- POBIERANIE DANYCH Z BAZY D1 ---
         try {
             const response = await fetch('/api/get-zones');
             window.mapData = await response.json();
@@ -111,24 +162,22 @@
                 const currentStatus = data.status || 'dostepna';
                 const config = statusConfig[currentStatus] || statusConfig['dostepna'];
 
-                // Rozdzielone style koloru i przeźroczystości dla pełnej zgodności z MS Edge
                 svgElement.setAttribute('fill', config.color);
                 svgElement.setAttribute('fill-opacity', config.opacity);
                 
                 svgElement.style.cursor = 'pointer';
-                svgElement.style.pointerEvents = 'visiblePainted'; // Naprawia wykrywanie kliknięć we wnętrze kszatłtu
+                svgElement.style.pointerEvents = 'visiblePainted';
                 svgElement.style.stroke = '#ffffff';
                 svgElement.style.strokeWidth = '3px';
                 svgElement.style.transition = 'fill-opacity 0.15s ease-in-out';
 
-                // Najechanie (Hover)
+                // Hover
                 svgElement.addEventListener('mouseenter', () => {
                     if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                         tooltipTimeout = null;
                     }
 
-                    // Bezpieczne przeniesienie na wierzch (tylko jeśli element nie jest już ostatni)
                     if (svgElement.nextElementSibling) {
                         svgElement.parentElement.appendChild(svgElement);
                     }
@@ -161,7 +210,7 @@
                     }, 150);
                 });
 
-                // Kliknięcie - Otwarcie modala
+                // Kliknięcie
                 svgElement.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openModal(data);
