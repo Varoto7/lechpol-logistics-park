@@ -19,7 +19,7 @@
             <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
                 
-                <!-- Ścieżki stref (ID muszą zgadzać się z bazą, ewentualnie z myślnikiem) -->
+                <!-- Ścieżki stref -->
                 <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
                 <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
                 <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
@@ -43,7 +43,7 @@
         <div id="tooltip-status" class="text-gray-300 text-xs mt-1 uppercase tracking-wider">Status</div>
     </div>
 
-    <!-- Modal (Wyskakujące okienko ze szczegółami po kliknięciu) -->
+    <!-- Modal ze szczegółami po kliknięciu -->
     <div id="map-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-start mb-4">
@@ -79,16 +79,11 @@
 </div>
 
 <script is:inline>
-    const statusColors = {
-        'dostepna': 'rgba(16, 185, 129, 0.65)',
-        'rezerwacja': 'rgba(245, 158, 11, 0.65)',
-        'wynajeta': 'rgba(239, 68, 68, 0.65)'
-    };
-
-    const statusBadges = {
-        'dostepna': 'bg-emerald-100 text-emerald-700',
-        'rezerwacja': 'bg-amber-100 text-amber-700',
-        'wynajeta': 'bg-red-100 text-red-700'
+    // Pełna kompatybilność ze standardem SVG 1.1 dla MS Edge & Safari
+    const statusConfig = {
+        'dostepna': { color: '#10b981', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-emerald-100 text-emerald-700' },
+        'rezerwacja': { color: '#f59e0b', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-amber-100 text-amber-700' },
+        'wynajeta': { color: '#ef4444', opacity: '0.65', hoverOpacity: '0.9', badgeClass: 'bg-red-100 text-red-700' }
     };
 
     let tooltipTimeout = null;
@@ -100,13 +95,9 @@
             const response = await fetch('/api/get-zones');
             window.mapData = await response.json();
 
-            // Jeśli API zwróciło błąd lub baza jest pusta, wypisz błąd w konsoli (F12)
-            if (!window.mapData || window.mapData.error) {
-                console.error("Błąd API Mapy:", window.mapData?.error || "Brak danych");
-                return;
-            }
+            if (!window.mapData || window.mapData.error) return;
         } catch(e) {
-            console.error("Błąd połączenia z /api/get-zones:", e);
+            console.error("Błąd połączenia z mapą:", e);
             return; 
         }
         
@@ -114,30 +105,35 @@
             const data = window.mapData[id];
             if (!data || typeof data !== 'object') return;
 
-            // Szukamy ID w formacie 'hala1' lub 'hala-1'
             let svgElement = document.getElementById(id) || document.getElementById(id.replace('hala', 'hala-'));
             
             if (svgElement) {
                 const currentStatus = data.status || 'dostepna';
+                const config = statusConfig[currentStatus] || statusConfig['dostepna'];
 
-                svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
+                // Rozdzielone style koloru i przeźroczystości dla pełnej zgodności z MS Edge
+                svgElement.setAttribute('fill', config.color);
+                svgElement.setAttribute('fill-opacity', config.opacity);
+                
                 svgElement.style.cursor = 'pointer';
-                svgElement.style.pointerEvents = 'all';
+                svgElement.style.pointerEvents = 'visiblePainted'; // Naprawia wykrywanie kliknięć we wnętrze kszatłtu
                 svgElement.style.stroke = '#ffffff';
                 svgElement.style.strokeWidth = '3px';
-                svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
+                svgElement.style.transition = 'fill-opacity 0.15s ease-in-out';
 
+                // Najechanie (Hover)
                 svgElement.addEventListener('mouseenter', () => {
                     if (tooltipTimeout) {
                         clearTimeout(tooltipTimeout);
                         tooltipTimeout = null;
                     }
 
-                    if (svgElement.parentElement) {
+                    // Bezpieczne przeniesienie na wierzch (tylko jeśli element nie jest już ostatni)
+                    if (svgElement.nextElementSibling) {
                         svgElement.parentElement.appendChild(svgElement);
                     }
 
-                    svgElement.style.fill = (statusColors[currentStatus] || statusColors['dostepna']).replace('0.65', '0.9');
+                    svgElement.setAttribute('fill-opacity', config.hoverOpacity);
                     
                     document.getElementById('tooltip-title').innerText = data.nazwa || 'Strefa';
                     document.getElementById('tooltip-area').innerText = data.powierzchnia || '-';
@@ -149,13 +145,15 @@
                     });
                 });
 
+                // Ruch myszy
                 svgElement.addEventListener('mousemove', (e) => {
                     tooltip.style.left = (e.clientX + 15) + 'px';
                     tooltip.style.top = (e.clientY + 15) + 'px';
                 });
 
+                // Zjazd myszy
                 svgElement.addEventListener('mouseleave', () => {
-                    svgElement.style.fill = statusColors[currentStatus] || statusColors['dostepna'];
+                    svgElement.setAttribute('fill-opacity', config.opacity);
                     
                     tooltip.classList.add('opacity-0');
                     tooltipTimeout = setTimeout(() => {
@@ -163,6 +161,7 @@
                     }, 150);
                 });
 
+                // Kliknięcie - Otwarcie modala
                 svgElement.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openModal(data);
@@ -181,8 +180,10 @@
         
         const badge = document.getElementById('modal-status-badge');
         const currentStatus = data.status || 'dostepna';
+        const config = statusConfig[currentStatus] || statusConfig['dostepna'];
+
         badge.innerText = currentStatus;
-        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${statusBadges[currentStatus] || 'bg-gray-100 text-gray-700'}`;
+        badge.className = `inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${config.badgeClass}`;
         
         modal.classList.remove('hidden');
         modal.classList.add('flex');
