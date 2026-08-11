@@ -1,163 +1,175 @@
+---
+// src/components/InteractiveMap.astro
+---
 
-
-<div class="w-full max-w-7xl mx-auto py-12 px-4 relative">
-    
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Masterplan Parku Logistycznego</h2>
-        <p class="text-gray-500 mt-2">Wybierz obiekt na mapie, aby zobaczyć szczegóły.</p>
+<section class="py-16 px-4 bg-white dark:bg-slate-800/50 transition-colors duration-300 border-t border-gray-100 dark:border-slate-700/50">
+    <div class="max-w-7xl mx-auto">
         
-        <!-- Legenda -->
-        <div class="flex flex-wrap gap-4 mt-4 text-sm font-medium">
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-emerald-500"></span> Dostępne</div>
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-amber-500"></span> Rezerwacja</div>
-            <div class="flex items-center gap-2"><span class="w-4 h-4 rounded-full bg-red-500"></span> Wynajęte</div>
-        </div>
-    </div>
+        <!-- Nagłówek sekcji mapy -->
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-3">Interaktywna Mapa Stref i Hal</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-sm md:text-base">
+                Kliknij wybraną halę lub strefę na mapie, aby zobaczyć szczegółowe informacje o jej powierzchni i dostępności.
+            </p>
 
-    <!-- Kontener z przewijaniem na telefony -->
-    <div class="w-full overflow-x-auto rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-grab active:cursor-grabbing">
-        <div class="min-w-[1000px] relative" id="map-container">
-            
-            <svg width="100%" height="auto" viewBox="0 0 1920 2210" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                <rect x="0.5" y="0.5" width="1919" height="2209" fill="url(#pattern0_5_2)" stroke="#02FFE6"/>
-                
-                <path id="hala-1" d="M854 1422L774.5 1656L1423 1883L1506.5 1641.5L854 1422Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-2" d="M1456 1174L1323 1130.5L1185 1529L1429.5 1611.5L1589 1152L1478 1115L1456 1174Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-3" d="M1040 1092.5L851 1188.5L766.5 1022.5L953.5 926L1040 1092.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                <path id="hala-4" d="M971 705.5L680 855L766 1022L953 925L1039.5 1092.5L1140.5 1040.5L971 705.5Z" stroke="#3CF2FF" stroke-width="8"/>
-                
-                <defs>
-                    <pattern id="pattern0_5_2" patternContentUnits="objectBoundingBox" width="1" height="1">
-                        <use xlink:href="#image0_5_2" transform="scale(0.000520833 0.000452489)"/>
-                    </pattern>
-                    <image id="image0_5_2" width="1920" height="2210" preserveAspectRatio="none" href="/mapa-tlo.jpg" />
-                </defs>
-            </svg>
-
-        </div>
-    </div>
-
-    <!-- Dymek (Tooltip) podążający za kursorem -->
-    <div id="map-tooltip" class="fixed hidden pointer-events-none bg-slate-900 text-white p-3 rounded-xl shadow-xl z-50 text-sm transition-opacity duration-150 opacity-0">
-        <div id="tooltip-title" class="font-bold text-base mb-1">Nazwa Hali</div>
-        <div id="tooltip-area" class="text-emerald-400 font-medium">Powierzchnia</div>
-        <div id="tooltip-status" class="text-gray-300 text-xs mt-1 uppercase tracking-wider">Status</div>
-    </div>
-
-    <!-- Modal (Wyskakujące okienko ze szczegółami po kliknięciu) -->
-    <div id="map-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm opacity-0 transition-opacity">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl p-6 m-4 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h3 id="modal-title" class="text-2xl font-bold text-slate-900 dark:text-white">Nazwa Hali</h3>
-                    <span id="modal-status-badge" class="inline-block mt-2 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide">Status</span>
+            <!-- Legenda statusów -->
+            <div class="flex flex-wrap justify-center gap-6 mt-6 text-sm font-medium">
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span>
+                    <span class="text-slate-700 dark:text-gray-300">Dostępna</span>
                 </div>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block"></span>
+                    <span class="text-slate-700 dark:text-gray-300">Rezerwacja</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded-full bg-red-500 inline-block"></span>
+                    <span class="text-slate-700 dark:text-gray-300">Wynajęta</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kontener z Mapą SVG -->
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700 relative overflow-hidden">
+            <div id="mapContainer" class="w-full flex justify-center items-center">
+                
+                <svg viewBox="0 0 800 500" class="w-full h-auto max-w-4xl select-none" id="interactiveMapSvg">
+                    <!-- Tło terenu -->
+                    <rect x="10" y="10" width="780" height="480" rx="20" fill="#e2e8f0" class="dark:fill-slate-700/50" />
+                    <path d="M 20 240 L 780 240" stroke="#cbd5e1" stroke-width="20" stroke-dasharray="10 10" fill="none" class="dark:stroke-slate-600" />
+                    
+                    <!-- Strefy z dopasowanymi ID do D1 -->
+                    <g id="hala1" class="map-zone cursor-pointer transition-all duration-300">
+                        <rect x="50" y="50" width="180" height="150" rx="12" class="zone-shape fill-slate-300 stroke-slate-400 stroke-2 transition-all" />
+                        <text x="140" y="130" text-anchor="middle" class="fill-slate-800 dark:fill-white font-bold text-sm pointer-events-none">Hala 1</text>
+                    </g>
+
+                    <g id="hala2" class="map-zone cursor-pointer transition-all duration-300">
+                        <rect x="280" y="50" width="220" height="150" rx="12" class="zone-shape fill-slate-300 stroke-slate-400 stroke-2 transition-all" />
+                        <text x="390" y="130" text-anchor="middle" class="fill-slate-800 dark:fill-white font-bold text-sm pointer-events-none">Hala 2</text>
+                    </g>
+
+                    <g id="hala3" class="map-zone cursor-pointer transition-all duration-300">
+                        <rect x="550" y="50" width="180" height="150" rx="12" class="zone-shape fill-slate-300 stroke-slate-400 stroke-2 transition-all" />
+                        <text x="640" y="130" text-anchor="middle" class="fill-slate-800 dark:fill-white font-bold text-sm pointer-events-none">Hala 3</text>
+                    </g>
+
+                    <g id="hala4" class="map-zone cursor-pointer transition-all duration-300">
+                        <rect x="50" y="280" width="300" height="160" rx="12" class="zone-shape fill-slate-300 stroke-slate-400 stroke-2 transition-all" />
+                        <text x="200" y="365" text-anchor="middle" class="fill-slate-800 dark:fill-white font-bold text-sm pointer-events-none">Hala 4 / Strefa Logistyczna</text>
+                    </g>
+                </svg>
+
+            </div>
+        </div>
+
+        <!-- Modal Szczegółów Strefy -->
+        <div id="zoneModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 dark:border-slate-700 relative animate-in fade-in zoom-in duration-200">
+                
+                <button onclick="closeZoneModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold p-1">
+                    ✕
                 </button>
-            </div>
-            
-            <div class="space-y-4 text-slate-600 dark:text-gray-300">
-                <div class="flex justify-between py-2 border-b border-gray-100 dark:border-slate-700">
-                    <span class="font-medium">Powierzchnia:</span>
-                    <span id="modal-area" class="font-bold text-slate-900 dark:text-white">0 m²</span>
+                
+                <div id="modalStatusBadge" class="mb-3"></div>
+                <h3 id="modalTitle" class="text-2xl font-bold text-slate-900 dark:text-white mb-1"></h3>
+                <p id="modalArea" class="text-sky-500 font-bold text-lg mb-4"></p>
+                
+                <div class="border-t border-gray-100 dark:border-slate-700 pt-4 mb-6">
+                    <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Opis szczegółowy</span>
+                    <p id="modalDesc" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line"></p>
                 </div>
-                <div>
-                    <p class="font-medium mb-1">Opis:</p>
-                    <p id="modal-desc" class="text-sm leading-relaxed">Przykładowy opis.</p>
-                </div>
-            </div>
-            
-            <button onclick="closeModal()" class="w-full mt-6 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-medium py-3 rounded-xl transition-colors">
-                Zamknij
-            </button>
-        </div>
-    </div>
 
-</div>
+                <a href="/kontakt" class="block w-full text-center bg-slate-900 dark:bg-sky-600 hover:bg-sky-600 dark:hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition duration-300">
+                    Zapytaj o tę strefę
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<style>
+    .status-dostepna {
+        fill: #10b981 !important;
+        stroke: #059669 !important;
+    }
+    .status-rezerwacja {
+        fill: #f59e0b !important;
+        stroke: #d97706 !important;
+    }
+    .status-wynajeta {
+        fill: #ef4444 !important;
+        stroke: #dc2626 !important;
+    }
+
+    .map-zone:hover .zone-shape {
+        filter: brightness(1.15);
+        cursor: pointer;
+    }
+</style>
 
 <script is:inline>
-    const statusColors = {
-        'dostepna': 'rgba(16, 185, 129, 0.65)',
-        'rezerwacja': 'rgba(245, 158, 11, 0.65)',
-        'wynajeta': 'rgba(239, 68, 68, 0.65)'
-    };
+    let zonesData = {};
 
-    let tooltipTimeout = null;
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        const tooltip = document.getElementById('map-tooltip');
-        
-        // POBIERANIE DANYCH Z API D1!
+    async function initMap() {
         try {
             const response = await fetch('/api/get-zones');
-            window.mapData = await response.json();
-        } catch(e) {
-            console.error("Błąd pobierania danych mapy:", e);
-            return; // Przerywamy jeśli baza nie odpowiada
-        }
-        
-        Object.keys(window.mapData).forEach(id => {
-            const data = window.mapData[id];
-            const svgElement = document.getElementById(id);
-            
-            if (svgElement) {
-                // Konfiguracja bazowa
-                svgElement.style.fill = statusColors[data.status];
-                svgElement.style.cursor = 'pointer';
-                svgElement.style.pointerEvents = 'all';
-                svgElement.style.stroke = '#ffffff';
-                svgElement.style.strokeWidth = '3px';
-                svgElement.style.transition = 'fill 0.15s ease-in-out, opacity 0.15s ease-in-out';
+            zonesData = await response.json();
 
-                // Najechanie (Hover)
-                svgElement.addEventListener('mouseenter', () => {
-                    if (tooltipTimeout) {
-                        clearTimeout(tooltipTimeout);
-                        tooltipTimeout = null;
-                    }
+            if (zonesData.error) return;
 
-                    if (svgElement.parentElement) {
-                        svgElement.parentElement.appendChild(svgElement);
-                    }
+            Object.keys(zonesData).forEach(id => {
+                const zone = zonesData[id];
+                const element = document.getElementById(id);
 
-                    svgElement.style.fill = statusColors[data.status].replace('0.65', '0.9');
-                    
-                    document.getElementById('tooltip-title').innerText = data.nazwa;
-                    document.getElementById('tooltip-area').innerText = data.powierzchnia;
-                    document.getElementById('tooltip-status').innerText = data.status;
-                    
-                    tooltip.classList.remove('hidden');
-                    requestAnimationFrame(() => {
-                        tooltip.classList.remove('opacity-0');
+                if (element) {
+                    const shape = element.querySelector('.zone-shape') || element;
+
+                    shape.classList.remove('status-dostepna', 'status-rezerwacja', 'status-wynajeta');
+                    if (zone.status === 'dostepna') shape.classList.add('status-dostepna');
+                    if (zone.status === 'rezerwacja') shape.classList.add('status-rezerwacja');
+                    if (zone.status === 'wynajeta') shape.classList.add('status-wynajeta');
+
+                    element.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openZoneModal(zone);
                     });
-                });
+                }
+            });
 
-                // Ruch myszy
-                svgElement.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY + 15) + 'px';
-                });
+        } catch (err) {
+            console.error("Błąd połączenia z mapą:", err);
+        }
+    }
 
-                // Zjazd myszy
-                svgElement.addEventListener('mouseleave', () => {
-                    svgElement.style.fill = statusColors[data.status];
-                    
-                    tooltip.classList.add('opacity-0');
-                    tooltipTimeout = setTimeout(() => {
-                        tooltip.classList.add('hidden');
-                    }, 150);
-                });
+    function openZoneModal(zone) {
+        const modal = document.getElementById('zoneModal');
+        const badge = document.getElementById('modalStatusBadge');
+        
+        document.getElementById('modalTitle').innerText = zone.nazwa || ('Strefa ' + zone.id);
+        document.getElementById('modalArea').innerText = 'Powierzchnia: ' + (zone.powierzchnia || '-');
+        document.getElementById('modalDesc').innerText = zone.opis || 'Brak dodatkowego opisu.';
 
-                // Kliknięcie
-                svgElement.addEventListener('click', () => {
-                    openModal(data);
-                });
-            }
-        });
+        let badgeHtml = '<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">Nieokreślony</span>';
+        if (zone.status === 'dostepna') badgeHtml = '<span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">Dostępna</span>';
+        if (zone.status === 'rezerwacja') badgeHtml = '<span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">Rezerwacja</span>';
+        if (zone.status === 'wynajeta') badgeHtml = '<span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Wynajęta</span>';
+        
+        badge.innerHTML = badgeHtml;
+        modal.classList.remove('hidden');
+    }
+
+    window.closeZoneModal = function() {
+        document.getElementById('zoneModal').classList.add('hidden');
+    };
+
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('zoneModal');
+        if (e.target === modal) {
+            closeZoneModal();
+        }
     });
 
-    // --- FUNKCJE MODALA BEZ ZMIAN --- (zostaw openModal i closeModal tak jak miałeś)
-    function openModal(data) { /*...*/}
-    window.closeModal = function() { /*...*/}
+    document.addEventListener('DOMContentLoaded', initMap);
 </script>
