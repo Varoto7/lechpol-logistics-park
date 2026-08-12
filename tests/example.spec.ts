@@ -12,6 +12,22 @@ test.describe('Niezawodne testy funkcjonalne Lechpol Logistics', () => {
     });
 
     test('Mapa SVG posiada interaktywne strefy z bazy D1', async ({ page }) => {
+        // Przechwyć API i zwróć testową halę, aby skrypt mapy podpiął kliknięcia
+        await page.route('**/api/get-zones', async route => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    'hala-1': {
+                        nazwa: 'Hala Testowa 1',
+                        powierzchnia: '1500 m²',
+                        status: 'dostepna',
+                        opis: 'Testowy opis hali na potrzeby CI'
+                    }
+                }),
+            });
+        });
+
         await page.goto('/');
 
         const mapSvg = page.locator('#map-svg-element').first();
@@ -20,16 +36,16 @@ test.describe('Niezawodne testy funkcjonalne Lechpol Logistics', () => {
         const hala1 = page.locator('#hala-1, #hala1').first();
         await expect(hala1).toBeVisible();
 
-        // force: true pomija wirtualną blokadę tła <rect> w strukturze SVG
+        // Kliknięcie w halę
         await hala1.click({ force: true });
 
+        // Sprawdzenie czy okno modal się wyświetliło
         const modal = page.locator('#map-modal');
         await expect(modal).toBeVisible();
     });
 
     test('API stref (/api/get-zones) odpowiada', async ({ request }) => {
         const response = await request.get('/api/get-zones');
-        // Akceptujemy kod 200 (na produkcji/wranglerze) oraz 404 (w trybie astro dev bez mocka D1)
         expect([200, 404]).toContain(response.status());
     });
 
